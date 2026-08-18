@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-gray-200 font-sans antialiased;
+  }
+}
+
+/* Custom Scrollbar - Dark Orange / Obsidian */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0D0F13;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1F242F;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #EA580C;
+}
+
+/* Card & Panel Utility */
+.clean-panel {
+  background: #12151B;
+  border: 1px solid #262B35;
+}
+
+.clean-panel-hover {
+  background: #12151B;
+  border: 1px solid #262B35;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.clean-panel-hover:hover {
+  border-color: #EA580C;
+  transform: translateY(-2px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
