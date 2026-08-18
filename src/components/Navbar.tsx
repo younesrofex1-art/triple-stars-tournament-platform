@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Trophy, Radio, Users, Search, User, LogOut, X, Flame } from 'lucide-react';
+import { Trophy, Radio, Users, Search, User, LogOut, X, Shield, PlusCircle, UserCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { store } from '../services/store';
 import { useRealtimeStore } from '../hooks/useRealtimeStore';
@@ -8,13 +8,24 @@ import { useRealtimeStore } from '../hooks/useRealtimeStore';
 export const Navbar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, loginAsPlayer } = useAuth();
+  const { user, logout, loginAsPlayer, isStaff } = useAuth();
   const { tournaments, profiles } = useRealtimeStore();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [activeLoginTab, setActiveLoginTab] = useState<'existing' | 'new'>('new');
+
+  // Existing profile picker state
   const [selectedPlayerUsername, setSelectedPlayerUsername] = useState('');
+
+  // New gamer registration state
+  const [newUsername, setNewUsername] = useState('');
+  const [newDisplayName, setNewDisplayName] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [newPhone, setNewPhone] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const liveTournamentsCount = tournaments.filter((t) => t.status === 'LIVE').length;
 
@@ -38,12 +49,39 @@ export const Navbar: React.FC = () => {
     return false;
   };
 
-  const handlePlayerLogin = (e: React.FormEvent) => {
+  const handlePlayerLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPlayerUsername) return;
-    loginAsPlayer(selectedPlayerUsername);
+    await loginAsPlayer(selectedPlayerUsername);
     setIsLoginModalOpen(false);
     navigate(`/players/${selectedPlayerUsername}`);
+  };
+
+  const handleCreateNewPlayer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    if (!newUsername.trim() || !newDisplayName.trim() || !newEmail.trim()) {
+      setLoginError('Please complete all required fields.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const created = await store.createPlayerProfile({
+        username: newUsername,
+        display_name: newDisplayName,
+        email: newEmail,
+        phone: newPhone || undefined,
+      });
+
+      await loginAsPlayer(created.username);
+      setIsSubmitting(false);
+      setIsLoginModalOpen(false);
+      navigate(`/players/${created.username}`);
+    } catch (err: any) {
+      setIsSubmitting(false);
+      setLoginError(err.message || 'Username or email may already be taken.');
+    }
   };
 
   return (
@@ -180,6 +218,17 @@ export const Navbar: React.FC = () => {
               )}
             </div>
 
+            {/* Admin Portal link if Staff */}
+            {isStaff && (
+              <Link
+                to="/admin"
+                className="px-3 py-1.5 rounded-lg bg-surface-200 border border-brand-dark/50 hover:bg-brand-dark text-brand-orange hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors flex items-center space-x-1"
+              >
+                <Shield className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Admin Desk</span>
+              </Link>
+            )}
+
             {/* Player Profile or Player Sign In Button */}
             {user ? (
               <div className="flex items-center space-x-2">
@@ -188,7 +237,7 @@ export const Navbar: React.FC = () => {
                   className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-surface-200 border border-border hover:border-brand-dark transition-colors"
                 >
                   <div className="w-6 h-6 rounded bg-brand-dark text-white text-xs font-bold flex items-center justify-center font-mono">
-                    {user.username[0].toUpperCase()}
+                    {user.username ? user.username[0].toUpperCase() : 'U'}
                   </div>
                   <span className="text-xs font-medium text-white hidden sm:block">@{user.username}</span>
                 </Link>
@@ -202,24 +251,37 @@ export const Navbar: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="px-4 py-2 rounded-lg bg-brand-dark hover:bg-brand-orange text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center space-x-1.5 shadow-orange-sm"
-              >
-                <User className="w-3.5 h-3.5" />
-                <span>Player Login</span>
-              </button>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => {
+                    setActiveLoginTab(profiles.length > 0 ? 'existing' : 'new');
+                    setIsLoginModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-lg bg-brand-dark hover:bg-brand-orange text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center space-x-1.5 shadow-orange-sm"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  <span>Player Sign In</span>
+                </button>
+
+                <Link
+                  to="/admin/login"
+                  title="Staff Portal"
+                  className="p-2 rounded-lg bg-surface-200 border border-border text-gray-400 hover:text-brand-orange hover:border-brand-dark transition-colors"
+                >
+                  <Shield className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Quick Player Switcher Modal */}
+      {/* Player Login / Registration Modal */}
       {isLoginModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
           <div className="relative w-full max-w-md bg-surface-200 border border-border rounded-2xl p-6 shadow-elevated space-y-5">
             <div className="flex items-center justify-between border-b border-border pb-3">
-              <h3 className="font-display text-xl font-bold text-white uppercase">Player Sign In</h3>
+              <h3 className="font-display text-xl font-bold text-white uppercase">Competitor Access</h3>
               <button
                 onClick={() => setIsLoginModalOpen(false)}
                 className="p-1 rounded-lg text-gray-400 hover:text-white hover:bg-surface-100"
@@ -228,45 +290,156 @@ export const Navbar: React.FC = () => {
               </button>
             </div>
 
-            <p className="text-xs text-gray-400">
-              Select your registered player profile to register for tournaments and manage your competitor stats:
-            </p>
-
-            <form onSubmit={handlePlayerLogin} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-gray-300">Choose Profile</label>
-                <select
-                  value={selectedPlayerUsername}
-                  onChange={(e) => setSelectedPlayerUsername(e.target.value)}
-                  className="w-full bg-surface-300 border border-border rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-brand-dark"
-                  required
-                >
-                  <option value="">-- Select Competitor --</option>
-                  {profiles.map((p) => (
-                    <option key={p.id} value={p.username}>
-                      @{p.username} ({p.display_name}) - {p.wins} Wins
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="pt-2 flex items-center space-x-3">
+            {/* Modal Tabs */}
+            <div className="flex rounded-xl bg-surface-300 p-1 border border-border text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setActiveLoginTab('new')}
+                className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+                  activeLoginTab === 'new'
+                    ? 'bg-surface-100 text-white shadow-sm'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                <PlusCircle className="w-3.5 h-3.5" />
+                <span>New Player Registration</span>
+              </button>
+              {profiles.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => setIsLoginModalOpen(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-surface-100 text-gray-300 text-xs font-semibold"
+                  onClick={() => setActiveLoginTab('existing')}
+                  className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+                    activeLoginTab === 'existing'
+                      ? 'bg-surface-100 text-white shadow-sm'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
                 >
-                  Cancel
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>Existing Competitor</span>
                 </button>
-                <button
-                  type="submit"
-                  disabled={!selectedPlayerUsername}
-                  className="flex-1 py-2.5 rounded-xl bg-brand-dark hover:bg-brand-orange text-white text-xs font-bold uppercase transition-colors"
-                >
-                  Continue
-                </button>
+              )}
+            </div>
+
+            {loginError && (
+              <div className="p-3 rounded-lg bg-rose-950/40 border border-rose-800 text-rose-300 text-xs">
+                {loginError}
               </div>
-            </form>
+            )}
+
+            {activeLoginTab === 'new' ? (
+              <form onSubmit={handleCreateNewPlayer} className="space-y-3.5 text-xs">
+                <div className="space-y-1">
+                  <label className="block text-gray-300 font-semibold">Gamer Handle / Tag *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. shadow_striker"
+                    value={newUsername}
+                    onChange={(e) => setNewUsername(e.target.value)}
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-gray-300 font-semibold">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Reda Berrada"
+                    value={newDisplayName}
+                    onChange={(e) => setNewDisplayName(e.target.value)}
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-gray-300 font-semibold">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="reda@gmail.com"
+                    value={newEmail}
+                    onChange={(e) => setNewEmail(e.target.value)}
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-gray-300 font-semibold">Phone (Optional for SMS / Check-In)</label>
+                  <input
+                    type="tel"
+                    placeholder="+212 600-000000"
+                    value={newPhone}
+                    onChange={(e) => setNewPhone(e.target.value)}
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
+                  />
+                </div>
+
+                <div className="pt-2 flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsLoginModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-surface-100 text-gray-300 text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 py-2.5 rounded-xl bg-brand-dark hover:bg-brand-orange text-white text-xs font-bold uppercase tracking-wider transition-colors shadow-orange-sm"
+                  >
+                    {isSubmitting ? 'Creating...' : 'Create & Sign In'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handlePlayerLogin} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-gray-300">Choose Profile</label>
+                  <select
+                    value={selectedPlayerUsername}
+                    onChange={(e) => setSelectedPlayerUsername(e.target.value)}
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-brand-dark"
+                    required
+                  >
+                    <option value="">-- Select Competitor --</option>
+                    {profiles.map((p) => (
+                      <option key={p.id} value={p.username}>
+                        @{p.username} ({p.display_name}) - {p.wins} Wins
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="pt-2 flex items-center space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsLoginModalOpen(false)}
+                    className="flex-1 py-2.5 rounded-xl bg-surface-100 text-gray-300 text-xs font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!selectedPlayerUsername}
+                    className="flex-1 py-2.5 rounded-xl bg-brand-dark hover:bg-brand-orange text-white text-xs font-bold uppercase transition-colors"
+                  >
+                    Continue
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <div className="border-t border-border pt-3 text-center">
+              <Link
+                to="/admin/login"
+                onClick={() => setIsLoginModalOpen(false)}
+                className="text-[11px] text-gray-400 hover:text-brand-orange transition-colors inline-flex items-center space-x-1"
+              >
+                <Shield className="w-3 h-3" />
+                <span>Tournament Director / Staff Login</span>
+              </Link>
+            </div>
           </div>
         </div>
       )}

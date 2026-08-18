@@ -18,9 +18,9 @@ export interface Profile {
   id: string;
   username: string;
   display_name: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
   email: string;
-  phone?: string;
+  phone?: string | null;
   wins: number;
   losses: number;
   championships: number;
@@ -37,8 +37,8 @@ export interface Game {
   code: string;
   name: string;
   category: string;
-  logo_url?: string;
-  banner_url?: string;
+  logo_url?: string | null;
+  banner_url?: string | null;
 }
 
 export interface Tournament {
@@ -51,19 +51,19 @@ export interface Tournament {
   banner_url?: string;
   entry_fee_mad: number; // Stored as numeric MAD / DH
   prize_pool_mad: number; // Stored as numeric MAD / DH
-  early_bird_fee_mad?: number;
-  vip_fee_mad?: number;
+  early_bird_fee_mad?: number | null;
+  vip_fee_mad?: number | null;
   max_players: number;
   current_players?: number;
   format: 'single_elimination' | 'double_elimination' | 'round_robin' | 'swiss';
   status: TournamentStatus;
   location: string;
-  rules?: string;
-  stream_url?: string;
-  stream_embed_url?: string;
-  stream_title?: string;
-  registration_start_at?: string;
-  registration_end_at?: string;
+  rules?: string | null;
+  stream_url?: string | null;
+  stream_embed_url?: string | null;
+  stream_title?: string | null;
+  registration_start_at?: string | null;
+  registration_end_at?: string | null;
   start_at: string;
   created_at: string;
   updated_at: string;
@@ -79,8 +79,8 @@ export interface TournamentRegistration {
   check_in_status: CheckInStatus;
   payment_method: string;
   amount_paid_mad: number;
-  seed?: number;
-  team_name?: string;
+  seed?: number | null;
+  team_name?: string | null;
 }
 
 export interface TournamentRound {
@@ -96,26 +96,26 @@ export interface TournamentMatch {
   round_id: string;
   round_number: number;
   match_number: number;
-  player1_id?: string;
-  player2_id?: string;
+  player1_id?: string | null;
+  player2_id?: string | null;
   player1?: Profile;
   player2?: Profile;
   player1_score: number;
   player2_score: number;
-  winner_id?: string;
+  winner_id?: string | null;
   winner?: Profile;
   status: MatchStatus;
-  scheduled_at?: string;
-  next_match_id?: string;
-  next_match_slot?: 1 | 2;
+  scheduled_at?: string | null;
+  next_match_id?: string | null;
+  next_match_slot?: 1 | 2 | null;
   is_bye: boolean;
   updated_at: string;
 }
 
 export interface Stream {
   id: string;
-  tournament_id?: string;
-  match_id?: string;
+  tournament_id?: string | null;
+  match_id?: string | null;
   title: string;
   provider: 'youtube' | 'twitch' | 'custom';
   stream_url: string;
@@ -135,12 +135,12 @@ export interface NotificationItem {
 
 export interface AuditLog {
   id: string;
-  user_id?: string;
+  user_id?: string | null;
   user?: Profile;
   action: string;
   entity_type: string;
   entity_id: string;
-  details?: Record<string, any>;
+  details?: Record<string, any> | null;
   created_at: string;
 }
 

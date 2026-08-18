@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useRealtimeStore } from '../hooks/useRealtimeStore';
 import { formatMAD, formatDate, getStatusBadge } from '../utils/formatters';
 import { StreamEmbed } from '../components/StreamEmbed';
-import { Trophy, Radio, ArrowRight, Shield, Zap, Users, Play, Calendar, Star } from 'lucide-react';
+import { Trophy, Radio, Shield, Users, Star, Plus, Flame } from 'lucide-react';
 import gsap from 'gsap';
 
 export const Home: React.FC = () => {
@@ -30,7 +30,7 @@ export const Home: React.FC = () => {
 
   const liveTournaments = tournaments.filter((t) => t.status === 'LIVE');
   const featuredLive = liveTournaments[0] || tournaments[0];
-  const upcomingTournaments = tournaments.slice(0, 3);
+  const upcomingTournaments = tournaments.slice(0, 4);
   const topPlayers = profiles.slice(0, 5);
 
   return (
@@ -71,6 +71,14 @@ export const Home: React.FC = () => {
               <Radio className="w-4 h-4 text-rose-500" />
               <span>Live Arena</span>
             </Link>
+
+            <Link
+              to="/admin/login"
+              className="px-4 py-3 rounded-xl bg-surface-300 hover:bg-surface-100 border border-border text-gray-400 hover:text-white text-xs font-semibold uppercase tracking-wider transition-colors flex items-center space-x-1.5"
+            >
+              <Shield className="w-3.5 h-3.5 text-brand-orange" />
+              <span>Staff Portal</span>
+            </Link>
           </div>
         </div>
       </div>
@@ -94,10 +102,10 @@ export const Home: React.FC = () => {
           <StreamEmbed
             embedUrl={featuredLive?.stream_embed_url}
             streamUrl={featuredLive?.stream_url}
-            title={featuredLive?.stream_title || featuredLive?.name}
+            title={featuredLive?.stream_title || featuredLive?.name || 'Triple Stars Gaming Hall Live Stream'}
           />
 
-          {featuredLive && (
+          {featuredLive ? (
             <div className="p-6 rounded-2xl bg-surface-200 border border-border space-y-4">
               <div className="flex items-center justify-between text-xs">
                 <span className="font-semibold text-brand-orange uppercase font-mono">
@@ -109,7 +117,7 @@ export const Home: React.FC = () => {
               </div>
 
               <h3 className="font-display text-2xl font-bold text-white">{featuredLive.name}</h3>
-              <p className="text-xs text-gray-400 line-clamp-2">{featuredLive.description}</p>
+              <p className="text-xs text-gray-400 line-clamp-2">{featuredLive.description || 'Live tournament competition at Triple Stars Gaming Hall.'}</p>
 
               <div className="pt-2 flex items-center justify-between border-t border-border/80">
                 <span className="text-xs text-gray-300">
@@ -123,6 +131,23 @@ export const Home: React.FC = () => {
                 </Link>
               </div>
             </div>
+          ) : (
+            <div className="p-6 rounded-2xl bg-surface-200 border border-border text-center space-y-3">
+              <Trophy className="w-8 h-8 text-brand-orange mx-auto opacity-70" />
+              <h3 className="text-base font-bold text-white font-display uppercase">Welcome to Triple Stars Tournament Platform</h3>
+              <p className="text-xs text-gray-400 max-w-md mx-auto">
+                No tournaments have been published yet. Staff members can create and launch new tournaments from the Admin Portal.
+              </p>
+              <div className="pt-2">
+                <Link
+                  to="/admin/login"
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-brand-dark hover:bg-brand-orange text-white text-xs font-bold uppercase transition-colors shadow-orange-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create First Tournament</span>
+                </Link>
+              </div>
+            </div>
           )}
         </div>
 
@@ -133,7 +158,7 @@ export const Home: React.FC = () => {
             <div className="flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-display text-xl font-bold text-white uppercase flex items-center space-x-2">
                 <Trophy className="w-4 h-4 text-brand-orange" />
-                <span>Featured Tournaments</span>
+                <span>Active Tournaments</span>
               </h3>
               <Link to="/tournaments" className="text-xs text-brand-orange font-bold hover:underline">
                 View All
@@ -141,34 +166,40 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              {upcomingTournaments.map((t) => {
-                const badge = getStatusBadge(t.status);
-                return (
-                  <Link
-                    key={t.id}
-                    to={`/tournaments/${t.slug}`}
-                    className="p-3.5 rounded-xl bg-surface-300 border border-border hover:border-brand-dark transition-colors flex items-center justify-between group"
-                  >
-                    <div className="space-y-1 truncate pr-2">
-                      <div className="text-xs font-bold text-white group-hover:text-brand-orange transition-colors truncate">
-                        {t.name}
+              {upcomingTournaments.length === 0 ? (
+                <div className="py-6 text-center text-xs text-gray-400">
+                  <p>No tournaments scheduled yet.</p>
+                </div>
+              ) : (
+                upcomingTournaments.map((t) => {
+                  const badge = getStatusBadge(t.status);
+                  return (
+                    <Link
+                      key={t.id}
+                      to={`/tournaments/${t.slug}`}
+                      className="p-3.5 rounded-xl bg-surface-300 border border-border hover:border-brand-dark transition-colors flex items-center justify-between group"
+                    >
+                      <div className="space-y-1 truncate pr-2">
+                        <div className="text-xs font-bold text-white group-hover:text-brand-orange transition-colors truncate">
+                          {t.name}
+                        </div>
+                        <div className="text-[11px] text-gray-400">
+                          {t.game?.name} • Entry: {formatMAD(t.entry_fee_mad)}
+                        </div>
                       </div>
-                      <div className="text-[11px] text-gray-400">
-                        {t.game?.name} • Entry: {formatMAD(t.entry_fee_mad)}
-                      </div>
-                    </div>
 
-                    <div className="text-right flex-shrink-0">
-                      <span className={`px-2 py-0.5 rounded text-[9px] ${badge.class}`}>
-                        {badge.label}
-                      </span>
-                      <div className="text-xs font-mono font-bold text-brand-orange mt-1">
-                        {formatMAD(t.prize_pool_mad)}
+                      <div className="text-right flex-shrink-0">
+                        <span className={`px-2 py-0.5 rounded text-[9px] ${badge.class}`}>
+                          {badge.label}
+                        </span>
+                        <div className="text-xs font-mono font-bold text-brand-orange mt-1">
+                          {formatMAD(t.prize_pool_mad)}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
+                    </Link>
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -185,28 +216,34 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              {topPlayers.map((p, idx) => (
-                <Link
-                  key={p.id}
-                  to={`/players/${p.username}`}
-                  className="p-2.5 rounded-xl bg-surface-300 border border-border hover:border-brand-dark transition-colors flex items-center justify-between group"
-                >
-                  <div className="flex items-center space-x-3">
-                    <span className="w-6 h-6 rounded bg-surface-200 border border-border text-gray-300 font-bold text-xs flex items-center justify-center font-mono">
-                      #{idx + 1}
-                    </span>
-                    <div>
-                      <div className="text-xs font-bold text-white group-hover:text-brand-orange transition-colors">
-                        @{p.username}
+              {topPlayers.length === 0 ? (
+                <div className="py-6 text-center text-xs text-gray-400">
+                  <p>No competitors registered yet.</p>
+                </div>
+              ) : (
+                topPlayers.map((p, idx) => (
+                  <Link
+                    key={p.id}
+                    to={`/players/${p.username}`}
+                    className="p-2.5 rounded-xl bg-surface-300 border border-border hover:border-brand-dark transition-colors flex items-center justify-between group"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <span className="w-6 h-6 rounded bg-surface-200 border border-border text-gray-300 font-bold text-xs flex items-center justify-center font-mono">
+                        #{idx + 1}
+                      </span>
+                      <div>
+                        <div className="text-xs font-bold text-white group-hover:text-brand-orange transition-colors">
+                          @{p.username}
+                        </div>
+                        <div className="text-[10px] text-gray-400">{p.wins || 0} Wins • {p.championships || 0} Titles</div>
                       </div>
-                      <div className="text-[10px] text-gray-400">{p.wins} Wins • {p.championships} Titles</div>
                     </div>
-                  </div>
-                  <span className="text-xs font-mono font-bold text-brand-orange">
-                    {formatMAD(p.total_prize_money)}
-                  </span>
-                </Link>
-              ))}
+                    <span className="text-xs font-mono font-bold text-brand-orange">
+                      {formatMAD(p.total_prize_money || 0)}
+                    </span>
+                  </Link>
+                ))
+              )}
             </div>
           </div>
         </div>

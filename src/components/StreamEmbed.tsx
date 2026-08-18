@@ -2,9 +2,9 @@ import React from 'react';
 import { Radio, ExternalLink, Tv } from 'lucide-react';
 
 interface StreamEmbedProps {
-  embedUrl?: string;
-  title?: string;
-  streamUrl?: string;
+  embedUrl?: string | null;
+  title?: string | null;
+  streamUrl?: string | null;
 }
 
 export const StreamEmbed: React.FC<StreamEmbedProps> = ({
@@ -36,7 +36,7 @@ export const StreamEmbed: React.FC<StreamEmbedProps> = ({
             <span>LIVE STAGE</span>
           </span>
           <h3 className="font-display text-base font-bold text-white tracking-wide truncate">
-            {title}
+            {title || 'Triple Stars Main Stage'}
           </h3>
         </div>
 
@@ -58,7 +58,7 @@ export const StreamEmbed: React.FC<StreamEmbedProps> = ({
         {finalEmbedUrl ? (
           <iframe
             src={finalEmbedUrl}
-            title={title}
+            title={title || 'Stream Player'}
             className="w-full h-full border-0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen

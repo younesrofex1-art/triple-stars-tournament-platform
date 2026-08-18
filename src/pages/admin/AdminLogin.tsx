@@ -1,16 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, Lock, ArrowLeft, AlertCircle, KeyRound, Sparkles } from 'lucide-react';
+import { Shield, Lock, ArrowLeft, AlertCircle, UserPlus, LogIn, CheckCircle2 } from 'lucide-react';
 import gsap from 'gsap';
 
 export const AdminLoginPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isStaff, loginWithSupabase, loginWithDemoAdmin, loading } = useAuth();
+  const { isStaff, loginWithSupabase, signUpWithSupabase, loading } = useAuth();
 
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [role, setRole] = useState<'admin' | 'staff'>('admin');
+
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -29,26 +35,46 @@ export const AdminLoginPage: React.FC = () => {
         { opacity: 1, y: 0, duration: 0.4, ease: 'power2.out' }
       );
     }
-  }, []);
+  }, [mode]);
 
-  const handleSupabaseLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setSuccessMessage('');
     setIsSubmitting(true);
 
-    const res = await loginWithSupabase(email, password);
-    setIsSubmitting(false);
+    if (mode === 'signin') {
+      const res = await loginWithSupabase(email, password);
+      setIsSubmitting(false);
 
-    if (res.success) {
-      navigate('/admin');
+      if (res.success) {
+        navigate('/admin');
+      } else {
+        setErrorMessage(res.error || 'Invalid administrator credentials. Please check your email and password.');
+      }
     } else {
-      setErrorMessage(res.error || 'Invalid administrator credentials');
-    }
-  };
+      if (!username.trim() || !displayName.trim()) {
+        setErrorMessage('Please provide both username and full name.');
+        setIsSubmitting(false);
+        return;
+      }
 
-  const handleDemoBypass = () => {
-    loginWithDemoAdmin();
-    navigate('/admin');
+      const res = await signUpWithSupabase(email, password, {
+        username,
+        display_name: displayName,
+        role,
+      });
+      setIsSubmitting(false);
+
+      if (res.success) {
+        setSuccessMessage('Staff account created successfully! Signing in...');
+        setTimeout(() => {
+          navigate('/admin');
+        }, 1000);
+      } else {
+        setErrorMessage(res.error || 'Failed to create staff account.');
+      }
+    }
   };
 
   return (
@@ -64,7 +90,7 @@ export const AdminLoginPage: React.FC = () => {
         </Link>
       </div>
 
-      {/* Login Card */}
+      {/* Login / Signup Card */}
       <div
         ref={cardRef}
         className="w-full max-w-md bg-surface-200 border border-border rounded-2xl p-8 shadow-elevated space-y-6"
@@ -78,8 +104,46 @@ export const AdminLoginPage: React.FC = () => {
             Staff & Admin Portal
           </h1>
           <p className="text-xs text-gray-400">
-            Authenticate using your Triple Stars Supabase credentials to access the tournament management system.
+            {mode === 'signin'
+              ? 'Authenticate using your Triple Stars credentials to access tournament control.'
+              : 'Register a new administrator or tournament director account.'}
           </p>
+        </div>
+
+        {/* Tab Toggle */}
+        <div className="flex rounded-xl bg-surface-300 p-1 border border-border text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => {
+              setMode('signin');
+              setErrorMessage('');
+              setSuccessMessage('');
+            }}
+            className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+              mode === 'signin'
+                ? 'bg-surface-100 text-white shadow-sm'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            <span>Sign In</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMode('signup');
+              setErrorMessage('');
+              setSuccessMessage('');
+            }}
+            className={`flex-1 py-2 rounded-lg transition-all flex items-center justify-center space-x-1.5 ${
+              mode === 'signup'
+                ? 'bg-surface-100 text-white shadow-sm'
+                : 'text-gray-400 hover:text-white'
+            }`}
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Create Staff Account</span>
+          </button>
         </div>
 
         {errorMessage && (
@@ -89,14 +153,61 @@ export const AdminLoginPage: React.FC = () => {
           </div>
         )}
 
+        {successMessage && (
+          <div className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-300 text-xs flex items-center space-x-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
         {/* Supabase Auth Form */}
-        <form onSubmit={handleSupabaseLogin} className="space-y-4 text-xs">
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {mode === 'signup' && (
+            <>
+              <div className="space-y-1">
+                <label className="block text-gray-300 font-semibold">Full Name / Display Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Khalid Alami"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-gray-300 font-semibold">Admin Username Handle</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. khalid_admin"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-gray-300 font-semibold">Staff Role</label>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as 'admin' | 'staff')}
+                  className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-brand-dark"
+                >
+                  <option value="admin">Administrator / Tournament Director</option>
+                  <option value="staff">Gaming Hall Staff / Score Keeper</option>
+                </select>
+              </div>
+            </>
+          )}
+
           <div className="space-y-1">
-            <label className="block text-gray-300 font-semibold">Admin Email</label>
+            <label className="block text-gray-300 font-semibold">Email Address</label>
             <input
               type="email"
               required
-              placeholder="khalid@triplestars.ma"
+              placeholder="admin@triplestars.ma"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
@@ -108,6 +219,7 @@ export const AdminLoginPage: React.FC = () => {
             <input
               type="password"
               required
+              minLength={6}
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -121,28 +233,15 @@ export const AdminLoginPage: React.FC = () => {
             className="w-full py-3 rounded-xl bg-brand-dark hover:bg-brand-orange text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center space-x-2 shadow-orange-sm"
           >
             <Lock className="w-3.5 h-3.5" />
-            <span>{isSubmitting ? 'Authenticating...' : 'Sign In with Supabase'}</span>
+            <span>
+              {isSubmitting
+                ? 'Processing...'
+                : mode === 'signin'
+                ? 'Sign In to Admin Dashboard'
+                : 'Create Staff Account'}
+            </span>
           </button>
         </form>
-
-        {/* Divider */}
-        <div className="relative text-center my-4">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-border"></div>
-          </div>
-          <span className="relative bg-surface-200 px-3 text-[10px] text-gray-500 uppercase font-mono">
-            Or Demo Access
-          </span>
-        </div>
-
-        {/* Instant 1-Click Demo Login */}
-        <button
-          onClick={handleDemoBypass}
-          className="w-full py-2.5 rounded-xl bg-surface-100 hover:bg-surface-50 border border-border text-gray-300 hover:text-white font-semibold text-xs transition-colors flex items-center justify-center space-x-2"
-        >
-          <KeyRound className="w-3.5 h-3.5 text-brand-orange" />
-          <span>Instant Staff Demo Login (Khalid Admin)</span>
-        </button>
       </div>
     </div>
   );

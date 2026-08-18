@@ -10,6 +10,7 @@ import {
   FinanceSummary,
 } from '../types';
 import { generateSingleEliminationBracket, advanceMatchWinner } from './bracketEngine';
+import { supabase } from '../lib/supabase';
 
 export interface StoreSnapshot {
   games: Game[];
@@ -20,13 +21,13 @@ export interface StoreSnapshot {
   registrations: TournamentRegistration[];
   auditLogs: AuditLog[];
   finance: FinanceSummary;
+  isLoaded: boolean;
 }
 
-
-// Initial Mock Seed Data for Triple Stars Gaming Hall
-const INITIAL_GAMES: Game[] = [
+// Fallback initial game definitions (saved in Supabase `games` table)
+const DEFAULT_GAMES: Game[] = [
   {
-    id: '11111111-1111-1111-1111-111111111111',
+    id: 'ea03326e-58e0-469e-ab36-19fe145db76a',
     code: 'ea-fc-25',
     name: 'EA FC 25',
     category: 'Sports / Football',
@@ -34,7 +35,7 @@ const INITIAL_GAMES: Game[] = [
     banner_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&auto=format&fit=crop&q=80',
   },
   {
-    id: '22222222-2222-2222-2222-222222222222',
+    id: 'ad7fb811-38f6-451f-9bf4-0e60a5710daa',
     code: 'tekken-8',
     name: 'Tekken 8',
     category: 'Fighting',
@@ -42,7 +43,7 @@ const INITIAL_GAMES: Game[] = [
     banner_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&auto=format&fit=crop&q=80',
   },
   {
-    id: '33333333-3333-3333-3333-333333333333',
+    id: 'f433b1e5-cdf0-437c-9b52-ae77dc3028ff',
     code: 'sf6',
     name: 'Street Fighter 6',
     category: 'Fighting',
@@ -50,7 +51,7 @@ const INITIAL_GAMES: Game[] = [
     banner_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80',
   },
   {
-    id: '44444444-4444-4444-4444-444444444444',
+    id: 'fb209fda-c89b-43f8-a6a3-cbdc05ebd701',
     code: 'valorant',
     name: 'Valorant',
     category: 'Tactical Shooter',
@@ -58,7 +59,7 @@ const INITIAL_GAMES: Game[] = [
     banner_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&auto=format&fit=crop&q=80',
   },
   {
-    id: '55555555-5555-5555-5555-555555555555',
+    id: 'c4bf933a-a7b5-404a-a8ea-a65f0b0c1f81',
     code: 'cod-warzone',
     name: 'Call of Duty: Warzone',
     category: 'Battle Royale',
@@ -67,298 +68,103 @@ const INITIAL_GAMES: Game[] = [
   },
 ];
 
-const INITIAL_PROFILES: Profile[] = [
-  {
-    id: 'p-khalid',
-    username: 'khalid_fc',
-    display_name: 'Khalid Alami',
-    email: 'khalid@triplestars.ma',
-    phone: '+212 661-123456',
-    wins: 18,
-    losses: 4,
-    championships: 3,
-    total_prize_money: 3400, // 3400 DH
-    points: 450,
-    is_disabled: false,
-    role: 'admin',
-    created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'p-yassine',
-    username: 'yassine_pro',
-    display_name: 'Yassine Berrada',
-    email: 'yassine@triplestars.ma',
-    phone: '+212 662-987654',
-    wins: 15,
-    losses: 5,
-    championships: 2,
-    total_prize_money: 2100, // 2100 DH
-    points: 380,
-    is_disabled: false,
-    created_at: new Date(Date.now() - 25 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'p-amine',
-    username: 'amine_fist',
-    display_name: 'Amine Tazi',
-    email: 'amine@triplestars.ma',
-    phone: '+212 663-555111',
-    wins: 12,
-    losses: 3,
-    championships: 2,
-    total_prize_money: 1800, // 1800 DH
-    points: 320,
-    is_disabled: false,
-    created_at: new Date(Date.now() - 20 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'p-reda',
-    username: 'reda_striker',
-    display_name: 'Reda Benali',
-    email: 'reda@triplestars.ma',
-    phone: '+212 664-222333',
-    wins: 10,
-    losses: 6,
-    championships: 1,
-    total_prize_money: 1200, // 1200 DH
-    points: 260,
-    is_disabled: false,
-    created_at: new Date(Date.now() - 15 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'p-mehdi',
-    username: 'mehdi_apex',
-    display_name: 'Mehdi El Fassi',
-    email: 'mehdi@triplestars.ma',
-    phone: '+212 665-444888',
-    wins: 9,
-    losses: 7,
-    championships: 1,
-    total_prize_money: 950, // 950 DH
-    points: 210,
-    is_disabled: false,
-    created_at: new Date(Date.now() - 12 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'p-simo',
-    username: 'simohammed',
-    display_name: 'Simo Chaoui',
-    email: 'simo@triplestars.ma',
-    phone: '+212 666-777999',
-    wins: 8,
-    losses: 8,
-    championships: 0,
-    total_prize_money: 600, // 600 DH
-    points: 180,
-    is_disabled: false,
-    created_at: new Date(Date.now() - 10 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'p-omar',
-    username: 'ocharles',
-    display_name: 'Omar Mansouri',
-    email: 'omar@triplestars.ma',
-    phone: '+212 667-333444',
-    wins: 7,
-    losses: 5,
-    championships: 0,
-    total_prize_money: 450, // 450 DH
-    points: 150,
-    is_disabled: false,
-    created_at: new Date(Date.now() - 8 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'p-soufiane',
-    username: 'soufiane_esports',
-    display_name: 'Soufiane Kadiri',
-    email: 'soufiane@triplestars.ma',
-    phone: '+212 668-111222',
-    wins: 6,
-    losses: 9,
-    championships: 0,
-    total_prize_money: 300, // 300 DH
-    points: 120,
-    is_disabled: false,
-    created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-const INITIAL_TOURNAMENTS: Tournament[] = [
-  {
-    id: 't-eafc25-champions',
-    slug: 'triple-stars-ea-fc-25-champions-cup',
-    name: 'Triple Stars EA FC 25 Champions Cup',
-    description:
-      'The flagship EA FC 25 tournament at Triple Stars Gaming Hall! 8 top players compete live on stage for a 2,000 DH cash prize.',
-    game_id: '11111111-1111-1111-1111-111111111111',
-    game: INITIAL_GAMES[0],
-    banner_url:
-      'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&auto=format&fit=crop&q=80',
-    entry_fee_mad: 50, // 50 DH
-    prize_pool_mad: 2000, // 2000 DH
-    early_bird_fee_mad: 40, // 40 DH
-    vip_fee_mad: 75, // 75 DH
-    max_players: 8,
-    current_players: 8,
-    format: 'single_elimination',
-    status: 'LIVE',
-    location: 'Triple Stars Main Arena - Station 1 & 2',
-    rules: 'Best of 3 matches. Tactical defending mandatory. No pause during active attacks.',
-    stream_url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
-    stream_embed_url: 'https://www.youtube.com/embed/jfKfPfyJRdk?autoplay=1',
-    stream_title: 'EA FC 25 Semi-Finals Live from Triple Stars Gaming Hall',
-    start_at: new Date().toISOString(),
-    created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 't-tekken8-showdown',
-    slug: 'tekken-8-iron-fist-showdown',
-    name: 'Tekken 8 Iron Fist Showdown',
-    description:
-      'Fast-paced Tekken 8 bracket action. Bring your fight stick or controller and dominate the arena.',
-    game_id: '22222222-2222-2222-2222-222222222222',
-    game: INITIAL_GAMES[1],
-    banner_url:
-      'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&auto=format&fit=crop&q=80',
-    entry_fee_mad: 30, // 30 DH
-    prize_pool_mad: 1200, // 1200 DH
-    max_players: 16,
-    current_players: 6,
-    format: 'single_elimination',
-    status: 'REGISTRATION_OPEN',
-    location: 'Triple Stars Gaming Hall - Arcade Station B',
-    rules: 'FT3 rounds, FT2 games. Winners, Losers, and Grand Finals are FT3 games.',
-    start_at: new Date(Date.now() + 2 * 86400000).toISOString(),
-    created_at: new Date(Date.now() - 3 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 't-sf6-brawl',
-    slug: 'street-fighter-6-night-brawl',
-    name: 'Street Fighter 6 Night Brawl',
-    description:
-      'Late night fighting game intensity. Show off your combos and claim the championship title.',
-    game_id: '33333333-3333-3333-3333-333333333333',
-    game: INITIAL_GAMES[2],
-    banner_url:
-      'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=1200&auto=format&fit=crop&q=80',
-    entry_fee_mad: 20, // 20 DH
-    prize_pool_mad: 800, // 800 DH
-    max_players: 8,
-    current_players: 8,
-    format: 'single_elimination',
-    status: 'CHECK_IN',
-    location: 'Triple Stars Gaming Hall - Station C',
-    rules: 'First to 3 rounds. Blind pick available upon request.',
-    start_at: new Date(Date.now() + 4 * 3600000).toISOString(),
-    created_at: new Date(Date.now() - 2 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 't-valorant-invitational',
-    slug: 'valorant-5v5-triple-stars-invitational',
-    name: 'Valorant 5v5 Triple Stars Invitational',
-    description: 'Premier tactical squad tournament with big cash rewards.',
-    game_id: '44444444-4444-4444-4444-444444444444',
-    game: INITIAL_GAMES[3],
-    banner_url:
-      'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&auto=format&fit=crop&q=80',
-    entry_fee_mad: 100, // 100 DH
-    prize_pool_mad: 5000, // 5000 DH
-    max_players: 16,
-    current_players: 4,
-    format: 'single_elimination',
-    status: 'REGISTRATION_OPEN',
-    location: 'Triple Stars PC Gaming Zone',
-    rules: 'Standard VCT Competitive Ruleset. Map ban phase prior to match.',
-    start_at: new Date(Date.now() + 7 * 86400000).toISOString(),
-    created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-];
-
-// Pre-generate live bracket for EA FC 25 Champions Cup
-const liveEAFCBracket = generateSingleEliminationBracket(
-  't-eafc25-champions',
-  INITIAL_PROFILES.slice(0, 8)
-);
-
-// Mark some matches as played/live for demo realism
-const updatedMatches = [...liveEAFCBracket.matches];
-// Match 1 QF: Khalid 2 - 1 Yassine (Finished)
-const m1 = updatedMatches.find((m) => m.round_number === 1 && m.match_number === 1)!;
-m1.player1_score = 2;
-m1.player2_score = 1;
-m1.status = 'finished';
-m1.winner_id = INITIAL_PROFILES[0].id;
-m1.winner = INITIAL_PROFILES[0];
-const semi1 = updatedMatches.find((m) => m.id === m1.next_match_id)!;
-semi1.player1_id = INITIAL_PROFILES[0].id;
-semi1.player1 = INITIAL_PROFILES[0];
-
-// Match 2 QF: Amine 2 - 0 Reda (Finished)
-const m2 = updatedMatches.find((m) => m.round_number === 1 && m.match_number === 2)!;
-m2.player1_score = 2;
-m2.player2_score = 0;
-m2.status = 'finished';
-m2.winner_id = INITIAL_PROFILES[2].id;
-m2.winner = INITIAL_PROFILES[2];
-semi1.player2_id = INITIAL_PROFILES[2].id;
-semi1.player2 = INITIAL_PROFILES[2];
-
-// Semi 1: Khalid 2 - 1 Amine (LIVE)
-semi1.player1_score = 2;
-semi1.player2_score = 1;
-semi1.status = 'live';
-
 class TripleStarsStore {
-  private games: Game[] = INITIAL_GAMES;
-  private profiles: Profile[] = INITIAL_PROFILES;
-  private tournaments: Tournament[] = INITIAL_TOURNAMENTS;
-  private rounds: TournamentRound[] = liveEAFCBracket.rounds;
-  private matches: TournamentMatch[] = updatedMatches;
-  private registrations: TournamentRegistration[] = INITIAL_PROFILES.map((p, idx) => ({
-    id: `reg-${idx}`,
-    tournament_id: 't-eafc25-champions',
-    player_id: p.id,
-    player: p,
-    registered_at: new Date(Date.now() - idx * 3600000).toISOString(),
-    payment_status: 'paid',
-    check_in_status: 'checked_in',
-    payment_method: 'cash',
-    amount_paid_mad: 50,
-    seed: idx + 1,
-  }));
-  private auditLogs: AuditLog[] = [
-    {
-      id: 'audit-1',
-      action: 'TOURNAMENT_CREATED',
-      entity_type: 'tournament',
-      entity_id: 't-eafc25-champions',
-      details: { name: 'Triple Stars EA FC 25 Champions Cup', entry_fee: 50 },
-      created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
-    },
-    {
-      id: 'audit-2',
-      action: 'MATCH_SCORE_UPDATED',
-      entity_type: 'match',
-      entity_id: m1.id,
-      details: { player1: 'khalid_fc', player2: 'yassine_pro', score: '2-1' },
-      created_at: new Date(Date.now() - 3600000).toISOString(),
-    },
-  ];
+  private games: Game[] = DEFAULT_GAMES;
+  private profiles: Profile[] = [];
+  private tournaments: Tournament[] = [];
+  private rounds: TournamentRound[] = [];
+  private matches: TournamentMatch[] = [];
+  private registrations: TournamentRegistration[] = [];
+  private auditLogs: AuditLog[] = [];
+  private isLoaded: boolean = false;
 
   private listeners: (() => void)[] = [];
   private snapshot: StoreSnapshot | null = null;
+  private realtimeChannel: any = null;
+
+  constructor() {
+    this.initFromSupabase();
+  }
+
+  /**
+   * Load real data from Supabase and listen for Realtime events
+   */
+  async initFromSupabase() {
+    try {
+      await this.fetchAll();
+      this.setupRealtime();
+    } catch (e) {
+      console.warn('Initial Supabase fetch warning:', e);
+      this.isLoaded = true;
+      this.notify();
+    }
+  }
+
+  async fetchAll() {
+    try {
+      const [
+        gamesRes,
+        profilesRes,
+        tournamentsRes,
+        roundsRes,
+        matchesRes,
+        regsRes,
+        auditRes,
+      ] = await Promise.allSettled([
+        supabase.from('games').select('*').order('name'),
+        supabase.from('profiles').select('*').order('points', { ascending: false }),
+        supabase.from('tournaments').select('*, game:games(*)').order('start_at', { ascending: true }),
+        supabase.from('tournament_rounds').select('*').order('round_number', { ascending: true }),
+        supabase.from('tournament_matches').select('*, player1:player1_id(*), player2:player2_id(*), winner:winner_id(*)').order('round_number').order('match_number'),
+        supabase.from('tournament_registrations').select('*, player:profiles(*)').order('registered_at', { ascending: false }),
+        supabase.from('audit_logs').select('*, user:profiles(*)').order('created_at', { ascending: false }).limit(50),
+      ]);
+
+      if (gamesRes.status === 'fulfilled' && gamesRes.value.data && gamesRes.value.data.length > 0) {
+        this.games = gamesRes.value.data;
+      }
+      if (profilesRes.status === 'fulfilled' && profilesRes.value.data) {
+        this.profiles = profilesRes.value.data;
+      }
+      if (tournamentsRes.status === 'fulfilled' && tournamentsRes.value.data) {
+        this.tournaments = tournamentsRes.value.data;
+      }
+      if (roundsRes.status === 'fulfilled' && roundsRes.value.data) {
+        this.rounds = roundsRes.value.data;
+      }
+      if (matchesRes.status === 'fulfilled' && matchesRes.value.data) {
+        this.matches = matchesRes.value.data;
+      }
+      if (regsRes.status === 'fulfilled' && regsRes.value.data) {
+        this.registrations = regsRes.value.data;
+      }
+      if (auditRes.status === 'fulfilled' && auditRes.value.data) {
+        this.auditLogs = auditRes.value.data;
+      }
+
+      this.isLoaded = true;
+      this.notify();
+    } catch (err) {
+      console.error('Error fetching data from Supabase:', err);
+      this.isLoaded = true;
+      this.notify();
+    }
+  }
+
+  private setupRealtime() {
+    if (this.realtimeChannel) return;
+
+    this.realtimeChannel = supabase
+      .channel('triplestars-db-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public' },
+        () => {
+          this.fetchAll();
+        }
+      )
+      .subscribe();
+  }
 
   getSnapshot(): StoreSnapshot {
     if (!this.snapshot) {
@@ -371,6 +177,7 @@ class TripleStarsStore {
         registrations: this.registrations,
         auditLogs: this.auditLogs,
         finance: this.getFinanceSummary(),
+        isLoaded: this.isLoaded,
       };
     }
     return this.snapshot;
@@ -388,6 +195,8 @@ class TripleStarsStore {
     this.listeners.forEach((l) => l());
   }
 
+  // --- GETTERS ---
+
   getGames(): Game[] {
     return this.games;
   }
@@ -400,6 +209,10 @@ class TripleStarsStore {
     return this.profiles.find(
       (p) => p.username.toLowerCase() === username.toLowerCase()
     );
+  }
+
+  getProfileById(id: string): Profile | undefined {
+    return this.profiles.find((p) => p.id === id);
   }
 
   getTournaments(): Tournament[] {
@@ -426,164 +239,305 @@ class TripleStarsStore {
     return this.auditLogs;
   }
 
-  // --- ACTIONS ---
+  // --- ACTIONS (SUPABASE PERSISTED) ---
 
-  createTournament(data: Partial<Tournament>): Tournament {
+  async createTournament(data: Partial<Tournament>): Promise<Tournament> {
     const game = this.games.find((g) => g.id === data.game_id) || this.games[0];
-    const newId = `t-${Date.now()}`;
     const slug = (data.name || 'tournament')
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
+      .replace(/(^-|-$)+/g, '') + '-' + Math.floor(Math.random() * 1000);
 
-    const tournament: Tournament = {
-      id: newId,
+    const payload = {
       slug,
       name: data.name || 'New Tournament',
       description: data.description || '',
       game_id: game.id,
-      game,
       banner_url:
         data.banner_url ||
+        game.banner_url ||
         'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&auto=format&fit=crop&q=80',
       entry_fee_mad: Number(data.entry_fee_mad) || 0,
       prize_pool_mad: Number(data.prize_pool_mad) || 0,
-      early_bird_fee_mad: data.early_bird_fee_mad ? Number(data.early_bird_fee_mad) : undefined,
-      vip_fee_mad: data.vip_fee_mad ? Number(data.vip_fee_mad) : undefined,
+      early_bird_fee_mad: data.early_bird_fee_mad ? Number(data.early_bird_fee_mad) : null,
+      vip_fee_mad: data.vip_fee_mad ? Number(data.vip_fee_mad) : null,
       max_players: Number(data.max_players) || 16,
-      current_players: 0,
       format: data.format || 'single_elimination',
-      status: data.status || 'DRAFT',
+      status: data.status || 'REGISTRATION_OPEN',
       location: data.location || 'Triple Stars Gaming Hall',
-      rules: data.rules || '',
-      stream_url: data.stream_url,
-      stream_embed_url: data.stream_embed_url,
-      stream_title: data.stream_title,
+      rules: data.rules || 'Standard Moroccan Gaming Federation Rules. Fair Play mandatory.',
+      stream_url: data.stream_url || null,
+      stream_embed_url: data.stream_embed_url || null,
+      stream_title: data.stream_title || null,
       start_at: data.start_at || new Date(Date.now() + 86400000).toISOString(),
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
     };
 
-    this.tournaments.unshift(tournament);
-    this.addAuditLog('TOURNAMENT_CREATED', 'tournament', newId, { name: tournament.name });
+    const { data: inserted, error } = await supabase
+      .from('tournaments')
+      .insert(payload)
+      .select('*, game:games(*)')
+      .single();
+
+    if (error) {
+      console.error('Error creating tournament in Supabase:', error);
+      throw error;
+    }
+
+    this.tournaments.unshift(inserted);
+    this.addAuditLog('TOURNAMENT_CREATED', 'tournament', inserted.id, { name: inserted.name });
     this.notify();
-    return tournament;
+    return inserted;
   }
 
-  updateTournament(id: string, updates: Partial<Tournament>): Tournament {
+  async updateTournament(id: string, updates: Partial<Tournament>): Promise<Tournament> {
+    const { data: updated, error } = await supabase
+      .from('tournaments')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id)
+      .select('*, game:games(*)')
+      .single();
+
+    if (error) {
+      console.error('Error updating tournament in Supabase:', error);
+      throw error;
+    }
+
     const idx = this.tournaments.findIndex((t) => t.id === id);
-    if (idx === -1) throw new Error('Tournament not found');
-    const existing = this.tournaments[idx];
-    const updated = {
-      ...existing,
-      ...updates,
-      updated_at: new Date().toISOString(),
-    };
-    this.tournaments[idx] = updated;
+    if (idx !== -1) {
+      this.tournaments[idx] = updated;
+    }
     this.addAuditLog('TOURNAMENT_UPDATED', 'tournament', id, updates);
     this.notify();
     return updated;
   }
 
-  registerPlayer(tournamentId: string, player: Profile, teamName?: string): TournamentRegistration {
-    const t = this.getTournamentById(tournamentId);
-    if (!t) throw new Error('Tournament not found');
-    const existingReg = this.registrations.find(
-      (r) => r.tournament_id === tournamentId && r.player_id === player.id
-    );
-    if (existingReg) return existingReg;
+  async deleteTournament(id: string): Promise<void> {
+    const { error } = await supabase.from('tournaments').delete().eq('id', id);
+    if (error) {
+      console.error('Error deleting tournament in Supabase:', error);
+      throw error;
+    }
+    this.tournaments = this.tournaments.filter((t) => t.id !== id);
+    this.matches = this.matches.filter((m) => m.tournament_id !== id);
+    this.rounds = this.rounds.filter((r) => r.tournament_id !== id);
+    this.registrations = this.registrations.filter((r) => r.tournament_id !== id);
+    this.notify();
+  }
 
-    const newReg: TournamentRegistration = {
-      id: `reg-${Date.now()}`,
-      tournament_id: tournamentId,
-      player_id: player.id,
-      player,
-      registered_at: new Date().toISOString(),
-      payment_status: 'pending',
-      check_in_status: 'registered',
-      payment_method: 'cash',
-      amount_paid_mad: t.entry_fee_mad,
-      team_name: teamName,
+  async createPlayerProfile(profileData: {
+    username: string;
+    display_name: string;
+    email: string;
+    phone?: string;
+  }): Promise<Profile> {
+    // Generate UUID for walk-in player profile
+    const id = crypto.randomUUID();
+    const payload: Partial<Profile> = {
+      id,
+      username: profileData.username.toLowerCase().trim().replace(/[^a-z0-9_]/g, ''),
+      display_name: profileData.display_name.trim(),
+      email: profileData.email.toLowerCase().trim(),
+      phone: profileData.phone || null,
+      wins: 0,
+      losses: 0,
+      championships: 0,
+      total_prize_money: 0,
+      points: 0,
+      is_disabled: false,
     };
 
-    this.registrations.push(newReg);
-    t.current_players = (t.current_players || 0) + 1;
-    this.addAuditLog('PLAYER_REGISTERED', 'registration', newReg.id, {
+    const { data: created, error } = await supabase
+      .from('profiles')
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Error creating profile in Supabase:', error);
+      throw error;
+    }
+
+    this.profiles.push(created);
+    this.notify();
+    return created;
+  }
+
+  async registerPlayer(
+    tournamentId: string,
+    player: Profile,
+    teamName?: string,
+    paymentMethod: string = 'cash'
+  ): Promise<TournamentRegistration> {
+    const t = this.getTournamentById(tournamentId);
+    if (!t) throw new Error('Tournament not found');
+
+    const existing = this.registrations.find(
+      (r) => r.tournament_id === tournamentId && r.player_id === player.id
+    );
+    if (existing) return existing;
+
+    const payload = {
+      tournament_id: tournamentId,
+      player_id: player.id,
+      payment_status: 'pending',
+      check_in_status: 'registered',
+      payment_method: paymentMethod,
+      amount_paid_mad: t.entry_fee_mad || 0,
+      team_name: teamName || null,
+    };
+
+    const { data: inserted, error } = await supabase
+      .from('tournament_registrations')
+      .insert(payload)
+      .select('*, player:profiles(*)')
+      .single();
+
+    if (error) {
+      console.error('Error registering player in Supabase:', error);
+      throw error;
+    }
+
+    this.registrations.unshift(inserted);
+    this.addAuditLog('PLAYER_REGISTERED', 'registration', inserted.id, {
       player: player.username,
       tournament: t.name,
     });
     this.notify();
-    return newReg;
+    return inserted;
   }
 
-  updateRegistrationStatus(
+  async updateRegistrationStatus(
     registrationId: string,
     payment_status?: TournamentRegistration['payment_status'],
     check_in_status?: TournamentRegistration['check_in_status']
-  ) {
+  ): Promise<void> {
+    const updates: any = {};
+    if (payment_status) updates.payment_status = payment_status;
+    if (check_in_status) updates.check_in_status = check_in_status;
+
+    const { error } = await supabase
+      .from('tournament_registrations')
+      .update(updates)
+      .eq('id', registrationId);
+
+    if (error) {
+      console.error('Error updating registration in Supabase:', error);
+      throw error;
+    }
+
     const reg = this.registrations.find((r) => r.id === registrationId);
-    if (!reg) return;
-    if (payment_status) reg.payment_status = payment_status;
-    if (check_in_status) reg.check_in_status = check_in_status;
-    this.addAuditLog('REGISTRATION_STATUS_UPDATED', 'registration', registrationId, {
-      payment_status,
-      check_in_status,
-    });
+    if (reg) {
+      if (payment_status) reg.payment_status = payment_status;
+      if (check_in_status) reg.check_in_status = check_in_status;
+    }
+    this.addAuditLog('REGISTRATION_STATUS_UPDATED', 'registration', registrationId, updates);
     this.notify();
   }
 
-  generateBracketForTournament(tournamentId: string, randomizeSeed: boolean = true) {
+  async generateBracketForTournament(tournamentId: string, randomizeSeed: boolean = true): Promise<void> {
     const regs = this.getRegistrationsByTournament(tournamentId);
-    // Filter players who are checked in or paid
+    
+    // Filter players who are checked in or registered
     const eligiblePlayers = regs
-      .filter((r) => r.check_in_status === 'checked_in' || r.payment_status === 'paid')
       .map((r) => r.player!)
       .filter(Boolean);
 
-    // Fall back to all profiles if fewer than 2 registered
-    const playerList = eligiblePlayers.length >= 2 ? eligiblePlayers : this.profiles.slice(0, 8);
+    if (eligiblePlayers.length < 2) {
+      throw new Error('You need at least 2 registered competitors to generate a bracket.');
+    }
 
     const { rounds, matches } = generateSingleEliminationBracket(
       tournamentId,
-      playerList,
+      eligiblePlayers,
       { randomize: randomizeSeed }
     );
+
+    // Delete existing rounds and matches for this tournament if re-generating
+    await supabase.from('tournament_matches').delete().eq('tournament_id', tournamentId);
+    await supabase.from('tournament_rounds').delete().eq('tournament_id', tournamentId);
+
+    // Insert rounds
+    const roundsPayload = rounds.map((r) => ({
+      id: r.id,
+      tournament_id: tournamentId,
+      round_number: r.round_number,
+      name: r.name,
+    }));
+    await supabase.from('tournament_rounds').insert(roundsPayload);
+
+    // Insert matches
+    const matchesPayload = matches.map((m) => ({
+      id: m.id,
+      tournament_id: tournamentId,
+      round_id: m.round_id,
+      round_number: m.round_number,
+      match_number: m.match_number,
+      player1_id: m.player1_id || null,
+      player2_id: m.player2_id || null,
+      player1_score: m.player1_score || 0,
+      player2_score: m.player2_score || 0,
+      winner_id: m.winner_id || null,
+      status: m.status || 'scheduled',
+      next_match_id: m.next_match_id || null,
+      next_match_slot: m.next_match_slot || null,
+      is_bye: m.is_bye || false,
+    }));
+    await supabase.from('tournament_matches').insert(matchesPayload);
+
+    // Update tournament status to CHECK_IN or LIVE
+    await this.updateTournament(tournamentId, { status: 'CHECK_IN' });
 
     this.rounds = [...this.rounds.filter((r) => r.tournament_id !== tournamentId), ...rounds];
     this.matches = [...this.matches.filter((m) => m.tournament_id !== tournamentId), ...matches];
 
-    this.updateTournament(tournamentId, { status: 'CHECK_IN' });
     this.addAuditLog('BRACKET_GENERATED', 'tournament', tournamentId, {
-      playersCount: playerList.length,
+      playersCount: eligiblePlayers.length,
       roundsCount: rounds.length,
     });
     this.notify();
   }
 
-  updateMatchScore(
+  async updateMatchScore(
     matchId: string,
     player1Score: number,
     player2Score: number,
     status?: TournamentMatch['status']
-  ) {
+  ): Promise<void> {
     const match = this.matches.find((m) => m.id === matchId);
     if (!match) throw new Error('Match not found');
+
+    const updates: any = {
+      player1_score: player1Score,
+      player2_score: player2Score,
+      updated_at: new Date().toISOString(),
+    };
+    if (status) updates.status = status;
+
+    const { error } = await supabase
+      .from('tournament_matches')
+      .update(updates)
+      .eq('id', matchId);
+
+    if (error) {
+      console.error('Error updating match in Supabase:', error);
+      throw error;
+    }
 
     match.player1_score = player1Score;
     match.player2_score = player2Score;
     if (status) match.status = status;
-    match.updated_at = new Date().toISOString();
-
-    this.addAuditLog('MATCH_SCORE_UPDATED', 'match', matchId, {
-      score: `${player1Score}-${player2Score}`,
-      status,
-    });
     this.notify();
   }
 
-  finishMatch(matchId: string, player1Score: number, player2Score: number) {
+  async finishMatch(matchId: string, player1Score: number, player2Score: number): Promise<void> {
+    const targetMatch = this.matches.find((m) => m.id === matchId);
+    if (!targetMatch) throw new Error('Match not found');
+
     const tournamentMatches = this.matches.filter(
-      (m) => m.tournament_id === this.matches.find((target) => target.id === matchId)?.tournament_id
+      (m) => m.tournament_id === targetMatch.tournament_id
     );
 
     const updatedMatches = advanceMatchWinner(
@@ -593,7 +547,23 @@ class TripleStarsStore {
       player2Score
     );
 
-    // Replace matches in store
+    // Save updated matches to Supabase
+    for (const m of updatedMatches) {
+      await supabase
+        .from('tournament_matches')
+        .update({
+          player1_id: m.player1_id || null,
+          player2_id: m.player2_id || null,
+          player1_score: m.player1_score || 0,
+          player2_score: m.player2_score || 0,
+          winner_id: m.winner_id || null,
+          status: m.status || 'scheduled',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', m.id);
+    }
+
+    // Update local matches
     this.matches = this.matches.map((m) => {
       const u = updatedMatches.find((um) => um.id === m.id);
       return u || m;
@@ -601,19 +571,30 @@ class TripleStarsStore {
 
     const finishedMatch = this.matches.find((m) => m.id === matchId);
     if (finishedMatch?.winner_id) {
-      // Update player win/loss stats
       const winner = this.profiles.find((p) => p.id === finishedMatch.winner_id);
       if (winner) {
-        winner.wins += 1;
-        winner.points += 20;
+        const newWins = (winner.wins || 0) + 1;
+        const newPoints = (winner.points || 0) + 20;
+        winner.wins = newWins;
+        winner.points = newPoints;
+        await supabase
+          .from('profiles')
+          .update({ wins: newWins, points: newPoints, updated_at: new Date().toISOString() })
+          .eq('id', winner.id);
       }
+
       const loserId =
         finishedMatch.winner_id === finishedMatch.player1_id
           ? finishedMatch.player2_id
           : finishedMatch.player1_id;
       const loser = this.profiles.find((p) => p.id === loserId);
       if (loser) {
-        loser.losses += 1;
+        const newLosses = (loser.losses || 0) + 1;
+        loser.losses = newLosses;
+        await supabase
+          .from('profiles')
+          .update({ losses: newLosses, updated_at: new Date().toISOString() })
+          .eq('id', loser.id);
       }
     }
 
@@ -642,17 +623,30 @@ class TripleStarsStore {
     };
   }
 
-  private addAuditLog(action: string, entity_type: string, entity_id: string, details?: any) {
-    this.auditLogs.unshift({
-      id: `audit-${Date.now()}`,
-      user_id: 'p-khalid',
-      user: this.profiles[0],
+  private async addAuditLog(
+    action: string,
+    entity_type: string,
+    entity_id: string,
+    details?: any,
+    userId?: string
+  ) {
+    const newLog: Partial<AuditLog> = {
+      id: crypto.randomUUID(),
+      user_id: userId || null,
       action,
       entity_type,
       entity_id,
       details,
       created_at: new Date().toISOString(),
-    });
+    };
+
+    try {
+      await supabase.from('audit_logs').insert(newLog);
+    } catch (e) {
+      // Non-blocking
+    }
+
+    this.auditLogs.unshift(newLog as AuditLog);
   }
 }
 

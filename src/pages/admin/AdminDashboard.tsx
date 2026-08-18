@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   RefreshCw,
   Search,
+  Trash2,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -49,6 +50,7 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Tournament Create/Edit Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingTournament, setEditingTournament] = useState<Partial<Tournament>>({
     name: '',
     game_id: store.getGames()[0]?.id || '',
@@ -92,25 +94,47 @@ export const AdminDashboardPage: React.FC = () => {
     }
   }, [activeTournamentId, currentTournament]);
 
-  const handleSaveTournament = (e: React.FormEvent) => {
+  const handleSaveTournament = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingTournament.id) {
-      store.updateTournament(editingTournament.id, editingTournament);
-    } else {
-      store.createTournament(editingTournament);
+    setIsSaving(true);
+    try {
+      if (editingTournament.id) {
+        await store.updateTournament(editingTournament.id, editingTournament);
+      } else {
+        const created = await store.createTournament(editingTournament);
+        setSelectedTournamentId(created.id);
+      }
+      setIsModalOpen(false);
+    } catch (err: any) {
+      alert(err.message || 'Error saving tournament');
+    } finally {
+      setIsSaving(false);
     }
-    setIsModalOpen(false);
   };
 
-  const handleUpdateStream = (e: React.FormEvent) => {
+  const handleDeleteTournament = async (id: string, name: string) => {
+    if (window.confirm(`Are you sure you want to delete "${name}"? All associated matches and registrations will be removed.`)) {
+      try {
+        await store.deleteTournament(id);
+      } catch (err: any) {
+        alert(err.message || 'Failed to delete tournament');
+      }
+    }
+  };
+
+  const handleUpdateStream = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeTournamentId) return;
-    store.updateTournament(activeTournamentId, {
-      stream_embed_url: streamEmbedInput,
-      stream_title: streamTitleInput,
-    });
-    setStreamSaveStatus(true);
-    setTimeout(() => setStreamSaveStatus(false), 2000);
+    try {
+      await store.updateTournament(activeTournamentId, {
+        stream_embed_url: streamEmbedInput,
+        stream_title: streamTitleInput,
+      });
+      setStreamSaveStatus(true);
+      setTimeout(() => setStreamSaveStatus(false), 2500);
+    } catch (err: any) {
+      alert('Error updating live stream');
+    }
   };
 
   const filteredRegistrations = currentTournamentRegs.filter(
@@ -121,8 +145,8 @@ export const AdminDashboardPage: React.FC = () => {
 
   const revenueChartData = tournaments.map((t) => ({
     name: t.name.length > 14 ? t.name.slice(0, 14) + '...' : t.name,
-    PrizePool: t.prize_pool_mad,
-    EntryFee: t.entry_fee_mad,
+    PrizePool: t.prize_pool_mad || 0,
+    EntryFee: t.entry_fee_mad || 0,
   }));
 
   return (
@@ -334,20 +358,26 @@ export const AdminDashboardPage: React.FC = () => {
                 <span className="text-xs font-mono text-gray-400">Moroccan Dirham</span>
               </div>
 
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueChartData}>
-                    <XAxis dataKey="name" stroke="#6B7280" fontSize={11} />
-                    <YAxis stroke="#6B7280" fontSize={11} />
-                    <Tooltip
-                      contentStyle={{ backgroundColor: '#12151B', borderColor: '#262B35', color: '#fff', borderRadius: '8px' }}
-                      formatter={(val: any) => [`${val} DH`, '']}
-                    />
-                    <Bar dataKey="PrizePool" fill="#EA580C" radius={[4, 4, 0, 0]} name="Prize Pool (DH)" />
-                    <Bar dataKey="EntryFee" fill="#71717A" radius={[4, 4, 0, 0]} name="Entry Fee (DH)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              {tournaments.length === 0 ? (
+                <div className="py-12 text-center text-xs text-gray-400">
+                  <p>No tournament data available yet. Create tournaments to generate analytics.</p>
+                </div>
+              ) : (
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={revenueChartData}>
+                      <XAxis dataKey="name" stroke="#6B7280" fontSize={11} />
+                      <YAxis stroke="#6B7280" fontSize={11} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#12151B', borderColor: '#262B35', color: '#fff', borderRadius: '8px' }}
+                        formatter={(val: any) => [`${val} DH`, '']}
+                      />
+                      <Bar dataKey="PrizePool" fill="#EA580C" radius={[4, 4, 0, 0]} name="Prize Pool (DH)" />
+                      <Bar dataKey="EntryFee" fill="#71717A" radius={[4, 4, 0, 0]} name="Entry Fee (DH)" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -360,58 +390,82 @@ export const AdminDashboardPage: React.FC = () => {
               <span className="text-xs text-gray-400 font-mono">{tournaments.length} Configured</span>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-gray-300">
-                <thead className="bg-surface-300 text-gray-400 uppercase font-bold text-[10px] border-b border-border">
-                  <tr>
-                    <th className="p-3.5">Tournament</th>
-                    <th className="p-3.5">Game</th>
-                    <th className="p-3.5">Entry Fee</th>
-                    <th className="p-3.5">Prize Pool</th>
-                    <th className="p-3.5">Status</th>
-                    <th className="p-3.5 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {tournaments.map((t) => {
-                    const badge = getStatusBadge(t.status);
-                    return (
-                      <tr key={t.id} className="hover:bg-surface-100/50 transition-colors">
-                        <td className="p-3.5 font-bold text-white">{t.name}</td>
-                        <td className="p-3.5">{t.game?.name}</td>
-                        <td className="p-3.5 font-mono font-semibold">{formatMAD(t.entry_fee_mad)}</td>
-                        <td className="p-3.5 font-mono font-bold text-brand-orange">{formatMAD(t.prize_pool_mad)}</td>
-                        <td className="p-3.5">
-                          <span className={`px-2 py-0.5 rounded text-[10px] ${badge.class}`}>
-                            {badge.label}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-right space-x-2">
-                          <button
-                            onClick={() => {
-                              setEditingTournament(t);
-                              setIsModalOpen(true);
-                            }}
-                            className="px-2.5 py-1 rounded bg-surface-100 hover:bg-surface-50 border border-border text-gray-300 text-xs font-semibold"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedTournamentId(t.id);
-                              setActiveTab('matches');
-                            }}
-                            className="px-2.5 py-1 rounded bg-brand-subtle hover:bg-brand-dark/30 border border-brand-dark/50 text-brand-orange text-xs font-bold"
-                          >
-                            Control
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            {tournaments.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <Trophy className="w-10 h-10 text-gray-500 mx-auto" />
+                <h4 className="text-base font-bold text-white">No Tournaments Created Yet</h4>
+                <p className="text-xs text-gray-400 max-w-sm mx-auto">
+                  Get started by creating your first tournament bracket with real prizes and entry fees.
+                </p>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-brand-dark hover:bg-brand-orange text-white text-xs font-bold uppercase transition-colors shadow-orange-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Create First Tournament</span>
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-gray-300">
+                  <thead className="bg-surface-300 text-gray-400 uppercase font-bold text-[10px] border-b border-border">
+                    <tr>
+                      <th className="p-3.5">Tournament</th>
+                      <th className="p-3.5">Game</th>
+                      <th className="p-3.5">Entry Fee</th>
+                      <th className="p-3.5">Prize Pool</th>
+                      <th className="p-3.5">Status</th>
+                      <th className="p-3.5 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {tournaments.map((t) => {
+                      const badge = getStatusBadge(t.status);
+                      return (
+                        <tr key={t.id} className="hover:bg-surface-100/50 transition-colors">
+                          <td className="p-3.5 font-bold text-white">{t.name}</td>
+                          <td className="p-3.5">{t.game?.name}</td>
+                          <td className="p-3.5 font-mono font-semibold">{formatMAD(t.entry_fee_mad)}</td>
+                          <td className="p-3.5 font-mono font-bold text-brand-orange">{formatMAD(t.prize_pool_mad)}</td>
+                          <td className="p-3.5">
+                            <span className={`px-2 py-0.5 rounded text-[10px] ${badge.class}`}>
+                              {badge.label}
+                            </span>
+                          </td>
+                          <td className="p-3.5 text-right space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingTournament(t);
+                                setIsModalOpen(true);
+                              }}
+                              className="px-2.5 py-1 rounded bg-surface-100 hover:bg-surface-50 border border-border text-gray-300 text-xs font-semibold"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSelectedTournamentId(t.id);
+                                setActiveTab('matches');
+                              }}
+                              className="px-2.5 py-1 rounded bg-brand-subtle hover:bg-brand-dark/30 border border-brand-dark/50 text-brand-orange text-xs font-bold"
+                            >
+                              Control
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTournament(t.id, t.name)}
+                              className="px-2 py-1 rounded bg-rose-950/40 hover:bg-rose-900 border border-rose-800 text-rose-300 text-xs"
+                              title="Delete Tournament"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
@@ -436,13 +490,21 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-2 w-full sm:w-auto">
-                <button
-                  onClick={() => store.generateBracketForTournament(activeTournamentId, true)}
-                  className="px-3.5 py-2 rounded-lg bg-surface-100 hover:bg-surface-50 border border-border text-gray-200 text-xs font-bold flex items-center space-x-1.5"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-brand-orange" />
-                  <span>Regenerate Bracket</span>
-                </button>
+                {activeTournamentId && (
+                  <button
+                    onClick={async () => {
+                      try {
+                        await store.generateBracketForTournament(activeTournamentId, true);
+                      } catch (err: any) {
+                        alert(err.message || 'Error generating bracket');
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-lg bg-surface-100 hover:bg-surface-50 border border-border text-gray-200 text-xs font-bold flex items-center space-x-1.5"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 text-brand-orange" />
+                    <span>Generate / Reset Bracket</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -452,7 +514,7 @@ export const AdminDashboardPage: React.FC = () => {
                 <Trophy className="w-10 h-10 text-gray-500 mx-auto" />
                 <h4 className="text-base font-bold text-white">No Bracket Matches Generated Yet</h4>
                 <p className="text-xs text-gray-400 max-w-sm mx-auto">
-                  Click "Regenerate Bracket" above to create the single elimination bracket matches for this tournament.
+                  Ensure you have at least 2 registered competitors, then click "Generate / Reset Bracket" above.
                 </p>
               </div>
             ) : (
@@ -640,49 +702,55 @@ export const AdminDashboardPage: React.FC = () => {
             </div>
 
             <div className="bg-surface-200 border border-border rounded-2xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-gray-300">
-                  <thead className="bg-surface-300 text-gray-400 uppercase font-bold text-[10px] border-b border-border">
-                    <tr>
-                      <th className="p-3.5">Seed</th>
-                      <th className="p-3.5">Competitor</th>
-                      <th className="p-3.5">Payment</th>
-                      <th className="p-3.5">Check-In Status</th>
-                      <th className="p-3.5 text-right">Desk Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {filteredRegistrations.map((reg, idx) => (
-                      <tr key={reg.id} className="hover:bg-surface-100/50 transition-colors">
-                        <td className="p-3.5 font-mono font-bold text-brand-orange">#{reg.seed || idx + 1}</td>
-                        <td className="p-3.5 font-bold text-white">@{reg.player?.username}</td>
-                        <td className="p-3.5">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                              reg.payment_status === 'paid'
-                                ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                                : 'bg-amber-950 text-amber-400 border border-amber-800'
-                            }`}
-                          >
-                            {reg.payment_status} ({formatMAD(reg.amount_paid_mad)})
-                          </span>
-                        </td>
-                        <td className="p-3.5 capitalize">{reg.check_in_status}</td>
-                        <td className="p-3.5 text-right">
-                          <button
-                            onClick={() =>
-                              store.updateRegistrationStatus(reg.id, 'paid', 'checked_in')
-                            }
-                            className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-xs font-bold"
-                          >
-                            Mark Cash Paid & Check-In
-                          </button>
-                        </td>
+              {filteredRegistrations.length === 0 ? (
+                <div className="p-12 text-center text-gray-400 text-xs">
+                  No competitors registered for this tournament yet.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-gray-300">
+                    <thead className="bg-surface-300 text-gray-400 uppercase font-bold text-[10px] border-b border-border">
+                      <tr>
+                        <th className="p-3.5">Seed</th>
+                        <th className="p-3.5">Competitor</th>
+                        <th className="p-3.5">Payment</th>
+                        <th className="p-3.5">Check-In Status</th>
+                        <th className="p-3.5 text-right">Desk Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredRegistrations.map((reg, idx) => (
+                        <tr key={reg.id} className="hover:bg-surface-100/50 transition-colors">
+                          <td className="p-3.5 font-mono font-bold text-brand-orange">#{reg.seed || idx + 1}</td>
+                          <td className="p-3.5 font-bold text-white">@{reg.player?.username}</td>
+                          <td className="p-3.5">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                                reg.payment_status === 'paid'
+                                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                                  : 'bg-amber-950 text-amber-400 border border-amber-800'
+                              }`}
+                            >
+                              {reg.payment_status} ({formatMAD(reg.amount_paid_mad)})
+                            </span>
+                          </td>
+                          <td className="p-3.5 capitalize">{reg.check_in_status}</td>
+                          <td className="p-3.5 text-right">
+                            <button
+                              onClick={() =>
+                                store.updateRegistrationStatus(reg.id, 'paid', 'checked_in')
+                              }
+                              className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-xs font-bold"
+                            >
+                              Mark Cash Paid & Check-In
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -789,21 +857,27 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="bg-surface-200 border border-border rounded-2xl p-6 space-y-4">
             <h3 className="font-display text-lg font-bold text-white uppercase">System Audit Log</h3>
             <div className="space-y-2">
-              {auditLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className="p-3 rounded-lg bg-surface-300 border border-border flex items-center justify-between text-xs"
-                >
-                  <div>
-                    <span className="font-mono font-bold text-brand-orange">{log.action}</span>
-                    <span className="text-gray-400 ml-2">[{log.entity_type}]</span>
-                    {log.details && (
-                      <span className="text-gray-500 ml-2 font-mono">{JSON.stringify(log.details)}</span>
-                    )}
-                  </div>
-                  <span className="text-[11px] text-gray-500">{formatDate(log.created_at)}</span>
+              {auditLogs.length === 0 ? (
+                <div className="py-6 text-center text-xs text-gray-400">
+                  No system actions recorded yet.
                 </div>
-              ))}
+              ) : (
+                auditLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3 rounded-lg bg-surface-300 border border-border flex items-center justify-between text-xs"
+                  >
+                    <div>
+                      <span className="font-mono font-bold text-brand-orange">{log.action}</span>
+                      <span className="text-gray-400 ml-2">[{log.entity_type}]</span>
+                      {log.details && (
+                        <span className="text-gray-500 ml-2 font-mono">{JSON.stringify(log.details)}</span>
+                      )}
+                    </div>
+                    <span className="text-[11px] text-gray-500">{formatDate(log.created_at)}</span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -828,6 +902,39 @@ export const AdminDashboardPage: React.FC = () => {
                   onChange={(e) => setEditingTournament({ ...editingTournament, name: e.target.value })}
                   className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2 text-white focus:outline-none focus:border-brand-dark"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-gray-300 font-semibold">Game Title</label>
+                  <select
+                    value={editingTournament.game_id || store.getGames()[0]?.id}
+                    onChange={(e) =>
+                      setEditingTournament({ ...editingTournament, game_id: e.target.value })
+                    }
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2 text-white"
+                  >
+                    {store.getGames().map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} ({g.category})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block text-gray-300 font-semibold">Location / Station</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Triple Stars Main Stage"
+                    value={editingTournament.location || 'Triple Stars Gaming Hall'}
+                    onChange={(e) =>
+                      setEditingTournament({ ...editingTournament, location: e.target.value })
+                    }
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2 text-white"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -881,6 +988,7 @@ export const AdminDashboardPage: React.FC = () => {
                     <option value={8}>8 Players</option>
                     <option value={16}>16 Players</option>
                     <option value={32}>32 Players</option>
+                    <option value={64}>64 Players</option>
                   </select>
                 </div>
 
@@ -905,6 +1013,19 @@ export const AdminDashboardPage: React.FC = () => {
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <label className="block text-gray-300 font-semibold">Tournament Rules</label>
+                <textarea
+                  rows={3}
+                  value={editingTournament.rules || ''}
+                  onChange={(e) =>
+                    setEditingTournament({ ...editingTournament, rules: e.target.value })
+                  }
+                  className="w-full bg-surface-300 border border-border rounded-xl p-3 text-white"
+                  placeholder="Enter tournament rules..."
+                />
+              </div>
+
               <div className="flex items-center justify-end space-x-3 pt-4 border-t border-border">
                 <button
                   type="button"
@@ -915,9 +1036,10 @@ export const AdminDashboardPage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
+                  disabled={isSaving}
                   className="px-6 py-2 rounded-xl bg-brand-dark hover:bg-brand-orange text-white font-bold uppercase tracking-wider shadow-orange-sm"
                 >
-                  Save Tournament
+                  {isSaving ? 'Saving...' : 'Save Tournament'}
                 </button>
               </div>
             </form>

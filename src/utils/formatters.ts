@@ -16,7 +16,7 @@ export function formatMAD(amount: number | null | undefined): string {
 /**
  * Format ISO date string into readable schedule format
  */
-export function formatDate(dateString?: string): string {
+export function formatDate(dateString?: string | null): string {
   if (!dateString) return 'TBD';
   const d = new Date(dateString);
   if (isNaN(d.getTime())) return 'TBD';
@@ -31,7 +31,7 @@ export function formatDate(dateString?: string): string {
 /**
  * Clean status badges with high-contrast matte colors
  */
-export function getStatusBadge(status: string) {
+export function getStatusBadge(status?: string | null) {
   switch (status) {
     case 'LIVE':
       return { 
