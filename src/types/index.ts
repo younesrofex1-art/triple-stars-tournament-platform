@@ -83,11 +83,14 @@ export interface TournamentRegistration {
   team_name?: string | null;
 }
 
+export type TournamentStage = 'winners' | 'losers' | 'grand_finals' | 'reset' | 'swiss' | 'group';
+
 export interface TournamentRound {
   id: string;
   tournament_id: string;
   round_number: number;
   name: string;
+  stage?: TournamentStage;
 }
 
 export interface TournamentMatch {
@@ -96,6 +99,7 @@ export interface TournamentMatch {
   round_id: string;
   round_number: number;
   match_number: number;
+  stage?: TournamentStage;
   player1_id?: string | null;
   player2_id?: string | null;
   player1?: Profile;
@@ -108,8 +112,25 @@ export interface TournamentMatch {
   scheduled_at?: string | null;
   next_match_id?: string | null;
   next_match_slot?: 1 | 2 | null;
+  loser_match_id?: string | null;
+  loser_match_slot?: 1 | 2 | null;
+  group_name?: string | null;
   is_bye: boolean;
   updated_at: string;
+}
+
+export interface SwissStanding {
+  player_id: string;
+  player: Profile;
+  rank: number;
+  match_points: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  matches_played: number;
+  game_differential: number;
+  buchholz: number;
+  opponents: string[];
 }
 
 export interface Stream {

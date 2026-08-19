@@ -73,6 +73,8 @@ export const AdminDashboardPage: React.FC = () => {
 
   // Registrations search filter
   const [regSearch, setRegSearch] = useState('');
+  const [matchStageFilter, setMatchStageFilter] = useState<'all' | 'winners' | 'losers' | 'grand_finals'>('all');
+  const [isGeneratingSwissRound, setIsGeneratingSwissRound] = useState(false);
 
   // Protect admin route
   useEffect(() => {
@@ -474,22 +476,52 @@ export const AdminDashboardPage: React.FC = () => {
           <div className="space-y-6">
             {/* Tournament Selector & Actions */}
             <div className="p-4 rounded-xl bg-surface-200 border border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center space-x-3 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
                 <span className="text-xs font-semibold text-gray-400 whitespace-nowrap">Active Tournament:</span>
                 <select
                   value={activeTournamentId}
-                  onChange={(e) => setSelectedTournamentId(e.target.value)}
-                  className="bg-surface-300 border border-border rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-brand-dark w-full sm:w-80"
+                  onChange={(e) => {
+                    setSelectedTournamentId(e.target.value);
+                    setMatchStageFilter('all');
+                  }}
+                  className="bg-surface-300 border border-border rounded-lg px-3 py-2 text-xs text-white font-bold focus:outline-none focus:border-brand-dark w-full sm:w-72"
                 >
                   {tournaments.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} ({t.status})
+                      {t.name} ({t.format || 'single_elimination'})
                     </option>
                   ))}
                 </select>
+
+                <span className="px-2.5 py-1 rounded bg-surface-100 text-brand-orange border border-border text-[11px] font-mono font-bold uppercase">
+                  {currentTournament?.format === 'double_elimination' && 'Double Elimination'}
+                  {currentTournament?.format === 'swiss' && 'Swiss Format'}
+                  {currentTournament?.format === 'round_robin' && 'Round Robin'}
+                  {(!currentTournament?.format || currentTournament?.format === 'single_elimination') && 'Single Elimination'}
+                </span>
               </div>
 
-              <div className="flex items-center space-x-2 w-full sm:w-auto">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                {activeTournamentId && currentTournament?.format === 'swiss' && (
+                  <button
+                    disabled={isGeneratingSwissRound}
+                    onClick={async () => {
+                      setIsGeneratingSwissRound(true);
+                      try {
+                        await store.generateNextSwissRound(activeTournamentId);
+                      } catch (err: any) {
+                        alert(err.message || 'Error generating next Swiss round');
+                      } finally {
+                        setIsGeneratingSwissRound(false);
+                      }
+                    }}
+                    className="px-3.5 py-2 rounded-lg bg-brand-dark hover:bg-brand-orange text-white text-xs font-bold flex items-center space-x-1.5 shadow-orange-sm transition-colors"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>{isGeneratingSwissRound ? 'Generating...' : 'Next Swiss Round'}</span>
+                  </button>
+                )}
+
                 {activeTournamentId && (
                   <button
                     onClick={async () => {
@@ -499,14 +531,63 @@ export const AdminDashboardPage: React.FC = () => {
                         alert(err.message || 'Error generating bracket');
                       }
                     }}
-                    className="px-3.5 py-2 rounded-lg bg-surface-100 hover:bg-surface-50 border border-border text-gray-200 text-xs font-bold flex items-center space-x-1.5"
+                    className="px-3.5 py-2 rounded-lg bg-surface-100 hover:bg-surface-50 border border-border text-gray-200 text-xs font-bold flex items-center space-x-1.5 transition-colors"
                   >
                     <RefreshCw className="w-3.5 h-3.5 text-brand-orange" />
-                    <span>Generate / Reset Bracket</span>
+                    <span>Generate / Reset {currentTournament?.format === 'swiss' ? 'Tournament' : 'Bracket'}</span>
                   </button>
                 )}
               </div>
             </div>
+
+            {/* Double Elimination Stage Tabs in Admin */}
+            {currentTournament?.format === 'double_elimination' && (
+              <div className="flex items-center space-x-2 overflow-x-auto pb-1">
+                <span className="text-[10px] uppercase font-bold text-gray-400 flex-shrink-0">
+                  Filter Bracket Stage:
+                </span>
+                <button
+                  onClick={() => setMatchStageFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${
+                    matchStageFilter === 'all'
+                      ? 'bg-brand-dark text-white shadow-orange-sm'
+                      : 'bg-surface-300 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  All Matches ({currentTournamentMatches.length})
+                </button>
+                <button
+                  onClick={() => setMatchStageFilter('winners')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${
+                    matchStageFilter === 'winners'
+                      ? 'bg-brand-dark text-white shadow-orange-sm'
+                      : 'bg-surface-300 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Winners Bracket ({currentTournamentMatches.filter((m) => m.stage === 'winners').length})
+                </button>
+                <button
+                  onClick={() => setMatchStageFilter('losers')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${
+                    matchStageFilter === 'losers'
+                      ? 'bg-brand-dark text-white shadow-orange-sm'
+                      : 'bg-surface-300 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Losers Bracket ({currentTournamentMatches.filter((m) => m.stage === 'losers').length})
+                </button>
+                <button
+                  onClick={() => setMatchStageFilter('grand_finals')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase ${
+                    matchStageFilter === 'grand_finals'
+                      ? 'bg-brand-dark text-white shadow-orange-sm'
+                      : 'bg-surface-300 text-gray-400 hover:text-white'
+                  }`}
+                >
+                  Grand Finals ({currentTournamentMatches.filter((m) => m.stage === 'grand_finals' || m.stage === 'reset').length})
+                </button>
+              </div>
+            )}
 
             {/* Match Score Cards */}
             {currentTournamentMatches.length === 0 ? (
@@ -519,9 +600,18 @@ export const AdminDashboardPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {currentTournamentMatches.map((match) => {
+                {currentTournamentMatches
+                  .filter((m) => {
+                    if (currentTournament?.format !== 'double_elimination' || matchStageFilter === 'all') return true;
+                    if (matchStageFilter === 'winners') return m.stage === 'winners';
+                    if (matchStageFilter === 'losers') return m.stage === 'losers';
+                    if (matchStageFilter === 'grand_finals') return m.stage === 'grand_finals' || m.stage === 'reset';
+                    return true;
+                  })
+                  .map((match) => {
                   const isFinished = match.status === 'finished';
                   const isLive = match.status === 'live';
+                  const isReset = match.stage === 'reset';
 
                   return (
                     <div
@@ -529,15 +619,36 @@ export const AdminDashboardPage: React.FC = () => {
                       className={`p-4 rounded-xl bg-surface-200 border space-y-3 ${
                         isLive
                           ? 'border-rose-700 bg-rose-950/20'
+                          : isReset
+                          ? 'border-yellow-800 bg-yellow-950/20'
                           : isFinished
                           ? 'border-border opacity-90'
                           : 'border-border'
                       }`}
                     >
                       <div className="flex items-center justify-between text-xs text-gray-400">
-                        <span className="font-mono font-semibold">
-                          Round {match.round_number} • Match #{match.match_number}
-                        </span>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono font-semibold">
+                            R{match.round_number} • Match #{match.match_number}
+                          </span>
+                          {match.stage && (
+                            <span
+                              className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-bold uppercase ${
+                                match.stage === 'winners'
+                                  ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
+                                  : match.stage === 'losers'
+                                  ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
+                                  : match.stage === 'grand_finals'
+                                  ? 'bg-amber-950/80 text-amber-300 border border-amber-800'
+                                  : match.stage === 'reset'
+                                  ? 'bg-yellow-950/80 text-yellow-300 border border-yellow-800'
+                                  : 'bg-sky-950/80 text-sky-400 border border-sky-800'
+                              }`}
+                            >
+                              {match.stage === 'grand_finals' ? 'Grand Finals' : match.stage}
+                            </span>
+                          )}
+                        </div>
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                             isLive
@@ -554,7 +665,7 @@ export const AdminDashboardPage: React.FC = () => {
                       {/* Score Manipulation Grid */}
                       <div className="grid grid-cols-2 gap-3">
                         {/* Player 1 Slot */}
-                        <div className="p-3 rounded-lg bg-surface-300 border border-border space-y-2">
+                        <div className="p-3 rounded-xl bg-surface-300 border border-border space-y-2">
                           <div className="text-xs font-bold text-white truncate">
                             {match.player1 ? `@${match.player1.username}` : 'TBD'}
                           </div>
@@ -568,11 +679,11 @@ export const AdminDashboardPage: React.FC = () => {
                                   match.status
                                 )
                               }
-                              className="w-7 h-7 rounded bg-surface-200 border border-border hover:border-brand-dark text-white font-bold"
+                              className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-surface-200 border border-border hover:border-brand-dark text-white font-bold text-base flex items-center justify-center active:scale-90 transition-transform"
                             >
                               -
                             </button>
-                            <span className="font-mono text-xl font-bold text-brand-orange">
+                            <span className="font-mono text-2xl font-bold text-brand-orange">
                               {match.player1_score}
                             </span>
                             <button
@@ -584,7 +695,7 @@ export const AdminDashboardPage: React.FC = () => {
                                   match.status
                                 )
                               }
-                              className="w-7 h-7 rounded bg-surface-200 border border-border hover:border-brand-dark text-white font-bold"
+                              className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-surface-200 border border-border hover:border-brand-dark text-white font-bold text-base flex items-center justify-center active:scale-90 transition-transform"
                             >
                               +
                             </button>
@@ -592,7 +703,7 @@ export const AdminDashboardPage: React.FC = () => {
                         </div>
 
                         {/* Player 2 Slot */}
-                        <div className="p-3 rounded-lg bg-surface-300 border border-border space-y-2">
+                        <div className="p-3 rounded-xl bg-surface-300 border border-border space-y-2">
                           <div className="text-xs font-bold text-white truncate">
                             {match.is_bye
                               ? 'BYE'
@@ -610,11 +721,11 @@ export const AdminDashboardPage: React.FC = () => {
                                   match.status
                                 )
                               }
-                              className="w-7 h-7 rounded bg-surface-200 border border-border hover:border-brand-dark text-white font-bold"
+                              className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-surface-200 border border-border hover:border-brand-dark text-white font-bold text-base flex items-center justify-center active:scale-90 transition-transform"
                             >
                               -
                             </button>
-                            <span className="font-mono text-xl font-bold text-brand-orange">
+                            <span className="font-mono text-2xl font-bold text-brand-orange">
                               {match.player2_score}
                             </span>
                             <button
@@ -626,7 +737,7 @@ export const AdminDashboardPage: React.FC = () => {
                                   match.status
                                 )
                               }
-                              className="w-7 h-7 rounded bg-surface-200 border border-border hover:border-brand-dark text-white font-bold"
+                              className="w-9 h-9 sm:w-8 sm:h-8 rounded-lg bg-surface-200 border border-border hover:border-brand-dark text-white font-bold text-base flex items-center justify-center active:scale-90 transition-transform"
                             >
                               +
                             </button>
@@ -971,7 +1082,26 @@ export const AdminDashboardPage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-gray-300 font-semibold">Tournament Format</label>
+                  <select
+                    value={editingTournament.format || 'single_elimination'}
+                    onChange={(e) =>
+                      setEditingTournament({
+                        ...editingTournament,
+                        format: e.target.value as any,
+                      })
+                    }
+                    className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2 text-white font-semibold"
+                  >
+                    <option value="single_elimination">Single Elimination</option>
+                    <option value="double_elimination">Double Elimination</option>
+                    <option value="swiss">Swiss Rounds</option>
+                    <option value="round_robin">Round Robin</option>
+                  </select>
+                </div>
+
                 <div className="space-y-1">
                   <label className="block text-gray-300 font-semibold">Max Players</label>
                   <select

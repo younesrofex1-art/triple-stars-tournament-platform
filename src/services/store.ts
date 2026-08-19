@@ -9,7 +9,15 @@ import {
   AuditLog,
   FinanceSummary,
 } from '../types';
-import { generateSingleEliminationBracket, advanceMatchWinner } from './bracketEngine';
+import {
+  generateSingleEliminationBracket,
+  generateDoubleEliminationBracket,
+  generateSwissTournament,
+  generateNextSwissRoundPairings,
+  calculateSwissStandings,
+  generateRoundRobinTournament,
+  advanceMatchWinner,
+} from './bracketEngine';
 import { supabase } from '../lib/supabase';
 
 export interface StoreSnapshot {
@@ -438,6 +446,7 @@ class TripleStarsStore {
   }
 
   async generateBracketForTournament(tournamentId: string, randomizeSeed: boolean = true): Promise<void> {
+    const tournament = this.tournaments.find((t) => t.id === tournamentId);
     const regs = this.getRegistrationsByTournament(tournamentId);
     
     // Filter players who are checked in or registered
@@ -449,11 +458,27 @@ class TripleStarsStore {
       throw new Error('You need at least 2 registered competitors to generate a bracket.');
     }
 
-    const { rounds, matches } = generateSingleEliminationBracket(
-      tournamentId,
-      eligiblePlayers,
-      { randomize: randomizeSeed }
-    );
+    let generated: { rounds: TournamentRound[]; matches: TournamentMatch[] };
+
+    const format = tournament?.format || 'single_elimination';
+
+    if (format === 'double_elimination') {
+      generated = generateDoubleEliminationBracket(tournamentId, eligiblePlayers, {
+        randomize: randomizeSeed,
+      });
+    } else if (format === 'swiss') {
+      generated = generateSwissTournament(tournamentId, eligiblePlayers, {
+        randomize: randomizeSeed,
+      });
+    } else if (format === 'round_robin') {
+      generated = generateRoundRobinTournament(tournamentId, eligiblePlayers);
+    } else {
+      generated = generateSingleEliminationBracket(tournamentId, eligiblePlayers, {
+        randomize: randomizeSeed,
+      });
+    }
+
+    const { rounds, matches } = generated;
 
     // Delete existing rounds and matches for this tournament if re-generating
     await supabase.from('tournament_matches').delete().eq('tournament_id', tournamentId);
@@ -494,8 +519,78 @@ class TripleStarsStore {
     this.matches = [...this.matches.filter((m) => m.tournament_id !== tournamentId), ...matches];
 
     this.addAuditLog('BRACKET_GENERATED', 'tournament', tournamentId, {
+      format,
       playersCount: eligiblePlayers.length,
       roundsCount: rounds.length,
+    });
+    this.notify();
+  }
+
+  async generateNextSwissRound(tournamentId: string): Promise<void> {
+    const tournamentMatches = this.matches.filter((m) => m.tournament_id === tournamentId);
+    const regs = this.getRegistrationsByTournament(tournamentId);
+    const eligiblePlayers = regs.map((r) => r.player!).filter(Boolean);
+
+    if (eligiblePlayers.length < 2) {
+      throw new Error('Not enough players registered.');
+    }
+
+    const highestRoundNumber = tournamentMatches.reduce(
+      (max, m) => Math.max(max, m.round_number),
+      0
+    );
+    const nextRoundNumber = highestRoundNumber + 1;
+
+    const newMatches = generateNextSwissRoundPairings(
+      tournamentId,
+      nextRoundNumber,
+      eligiblePlayers,
+      tournamentMatches
+    );
+
+    // Ensure round exists
+    let round = this.rounds.find(
+      (r) => r.tournament_id === tournamentId && r.round_number === nextRoundNumber
+    );
+
+    if (!round) {
+      round = {
+        id: `round-${tournamentId}-swiss-${nextRoundNumber}`,
+        tournament_id: tournamentId,
+        round_number: nextRoundNumber,
+        name: `Swiss Round ${nextRoundNumber}`,
+        stage: 'swiss',
+      };
+      await supabase.from('tournament_rounds').insert({
+        id: round.id,
+        tournament_id: tournamentId,
+        round_number: round.round_number,
+        name: round.name,
+      });
+      this.rounds.push(round);
+    }
+
+    const matchesPayload = newMatches.map((m) => ({
+      id: m.id,
+      tournament_id: tournamentId,
+      round_id: round!.id,
+      round_number: m.round_number,
+      match_number: m.match_number,
+      player1_id: m.player1_id || null,
+      player2_id: m.player2_id || null,
+      player1_score: m.player1_score || 0,
+      player2_score: m.player2_score || 0,
+      winner_id: m.winner_id || null,
+      status: m.status || 'scheduled',
+      is_bye: m.is_bye || false,
+    }));
+
+    await supabase.from('tournament_matches').insert(matchesPayload);
+
+    this.matches.push(...newMatches);
+    this.addAuditLog('SWISS_ROUND_GENERATED', 'tournament', tournamentId, {
+      roundNumber: nextRoundNumber,
+      matchesCount: newMatches.length,
     });
     this.notify();
   }
