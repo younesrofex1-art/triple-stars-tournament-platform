@@ -6,7 +6,7 @@ interface PublicLayoutProps {
 
 export const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
   return (
-    <div className="w-screen h-screen overflow-hidden bg-background text-gray-200 selection:bg-brand-dark selection:text-white">
+    <div className="min-h-screen bg-black text-gray-200 selection:bg-brand-dark selection:text-white">
       {children}
     </div>
   );

@@ -400,7 +400,8 @@ export const TournamentDetailsPage: React.FC = () => {
 
       {/* Registration Modal */}
       <RegistrationModal
-        tournament={tournament}
+        tournaments={[tournament]}
+        initialTournamentId={tournament.id}
         isOpen={isRegisterModalOpen}
         onClose={() => setIsRegisterModalOpen(false)}
       />

@@ -8,23 +8,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#060709',
+        background: '#000000',
         surface: {
-          50: '#1F2430',
-          100: '#151922',
-          200: '#0E1118',
-          300: '#080A0E',
+          50: '#22222A',
+          100: '#17171C',
+          200: '#0F0F13',
+          300: '#08080A',
         },
         border: {
-          subtle: 'rgba(255, 255, 255, 0.06)',
-          DEFAULT: 'rgba(255, 255, 255, 0.10)',
-          active: '#F97316',
+          subtle: 'rgba(255, 255, 255, 0.05)',
+          DEFAULT: 'rgba(255, 255, 255, 0.09)',
+          gold: 'rgba(245, 158, 11, 0.25)',
         },
         brand: {
-          orange: '#F97316',
-          dark: '#EA580C',
-          muted: '#C2410C',
-          subtle: 'rgba(249, 115, 22, 0.08)',
+          orange: '#F59E0B',
+          dark: '#D97706',
+          deep: '#B45309',
+          gold: '#EAB308',
+          subtle: 'rgba(245, 158, 11, 0.08)',
         },
         accent: {
           emerald: '#10B981',
@@ -40,9 +41,9 @@ export default {
         arabic: ['Readex Pro', 'IBM Plex Sans Arabic', 'sans-serif'],
       },
       boxShadow: {
-        'tesla': '0 20px 40px -15px rgba(0, 0, 0, 0.7)',
-        'tesla-hover': '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.15)',
-        'pill': '0 4px 20px rgba(0, 0, 0, 0.4)',
+        'apple': '0 20px 40px -15px rgba(0, 0, 0, 0.8)',
+        'gold-glow': '0 0 35px rgba(217, 119, 6, 0.15)',
+        'subtle': '0 4px 20px rgba(0, 0, 0, 0.5)',
       },
     },
   },

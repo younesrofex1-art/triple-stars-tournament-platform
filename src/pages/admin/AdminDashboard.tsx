@@ -823,41 +823,72 @@ export const AdminDashboardPage: React.FC = () => {
                     <thead className="bg-surface-300 text-gray-400 uppercase font-bold text-[10px] border-b border-border">
                       <tr>
                         <th className="p-3.5">Seed</th>
-                        <th className="p-3.5">Competitor</th>
+                        <th className="p-3.5">Competitor & Contact</th>
                         <th className="p-3.5">Payment</th>
                         <th className="p-3.5">Check-In Status</th>
-                        <th className="p-3.5 text-right">Desk Action</th>
+                        <th className="p-3.5 text-right">Confirmation & Desk Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {filteredRegistrations.map((reg, idx) => (
-                        <tr key={reg.id} className="hover:bg-surface-100/50 transition-colors">
-                          <td className="p-3.5 font-mono font-bold text-brand-orange">#{reg.seed || idx + 1}</td>
-                          <td className="p-3.5 font-bold text-white">@{reg.player?.username}</td>
-                          <td className="p-3.5">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
-                                reg.payment_status === 'paid'
-                                  ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                                  : 'bg-amber-950 text-amber-400 border border-amber-800'
-                              }`}
-                            >
-                              {reg.payment_status} ({formatMAD(reg.amount_paid_mad)})
-                            </span>
-                          </td>
-                          <td className="p-3.5 capitalize">{reg.check_in_status}</td>
-                          <td className="p-3.5 text-right">
-                            <button
-                              onClick={() =>
-                                store.updateRegistrationStatus(reg.id, 'paid', 'checked_in')
-                              }
-                              className="px-3 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 border border-emerald-800 text-emerald-300 text-xs font-bold"
-                            >
-                              Mark Cash Paid & Check-In
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredRegistrations.map((reg, idx) => {
+                        const cleanPhone = reg.player?.phone?.replace(/[^0-9]/g, '') || '';
+                        const waLink = cleanPhone ? `https://wa.me/${cleanPhone.startsWith('0') ? '212' + cleanPhone.slice(1) : cleanPhone}?text=Hello%20${encodeURIComponent(reg.player?.display_name || reg.player?.username || '')},%20this%20is%20Triple%20Stars%20confirming%20your%20registration%20for%20the%20tournament.` : null;
+
+                        return (
+                          <tr key={reg.id} className="hover:bg-surface-100/50 transition-colors">
+                            <td className="p-3.5 font-mono font-bold text-brand-orange">#{reg.seed || idx + 1}</td>
+                            <td className="p-3.5">
+                              <div className="font-bold text-white">@{reg.player?.username}</div>
+                              <div className="text-[11px] text-gray-400">{reg.player?.display_name}</div>
+                              {reg.player?.phone && (
+                                <div className="text-[11px] font-mono text-cyan-400 mt-0.5 flex items-center space-x-1">
+                                  <span>📞 {reg.player.phone}</span>
+                                </div>
+                              )}
+                            </td>
+                            <td className="p-3.5">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                                  reg.payment_status === 'paid'
+                                    ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
+                                    : 'bg-amber-950 text-amber-400 border border-amber-800'
+                                }`}
+                              >
+                                {reg.payment_status} ({formatMAD(reg.amount_paid_mad)})
+                              </span>
+                            </td>
+                            <td className="p-3.5 capitalize">
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                                reg.check_in_status === 'checked_in' || reg.check_in_status === 'paid'
+                                  ? 'text-emerald-400 bg-emerald-950/40'
+                                  : 'text-amber-400 bg-amber-950/40'
+                              }`}>
+                                {reg.check_in_status}
+                              </span>
+                            </td>
+                            <td className="p-3.5 text-right space-x-2">
+                              {waLink && (
+                                <a
+                                  href={waLink}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="inline-block px-2.5 py-1 rounded-lg bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-700 text-emerald-300 text-xs font-bold font-mono transition-colors"
+                                >
+                                  WhatsApp
+                                </a>
+                              )}
+                              <button
+                                onClick={() =>
+                                  store.updateRegistrationStatus(reg.id, 'paid', 'checked_in')
+                                }
+                                className="px-3 py-1.5 rounded-lg bg-brand-dark hover:bg-brand-orange text-white text-xs font-bold transition-colors"
+                              >
+                                {reg.check_in_status === 'checked_in' ? 'Confirmed ✓' : 'Confirm & Check-In'}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

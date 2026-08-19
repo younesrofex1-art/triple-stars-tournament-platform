@@ -1,234 +1,240 @@
 import React, { useState } from 'react';
+import { X, CheckCircle, Trophy, Phone, User, Tag } from 'lucide-react';
 import { Tournament } from '../types';
-import { formatMAD, formatDate } from '../utils/formatters';
-import { useAuth } from '../context/AuthContext';
+import { formatMAD } from '../utils/formatters';
 import { store } from '../services/store';
-import { X, CheckCircle, ShieldCheck, UserCheck, AlertCircle } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface RegistrationModalProps {
-  tournament: Tournament;
+  tournaments: Tournament[];
+  initialTournamentId?: string;
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
 export const RegistrationModal: React.FC<RegistrationModalProps> = ({
-  tournament,
+  tournaments,
+  initialTournamentId,
   isOpen,
   onClose,
   onSuccess,
 }) => {
-  const { user, loginAsPlayer } = useAuth();
+  const { t, isRTL } = useLanguage();
+
+  const [selectedTournamentId, setSelectedTournamentId] = useState<string>(
+    initialTournamentId || tournaments[0]?.id || ''
+  );
+  const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
   const [teamName, setTeamName] = useState('');
-  
-  // Walk-in / Guest fields if not signed in yet
-  const [guestUsername, setGuestUsername] = useState('');
-  const [guestDisplayName, setGuestDisplayName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
-  const [guestPhone, setGuestPhone] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  React.useEffect(() => {
+    if (initialTournamentId) {
+      setSelectedTournamentId(initialTournamentId);
+    } else if (tournaments.length > 0 && !selectedTournamentId) {
+      setSelectedTournamentId(tournaments[0].id);
+    }
+  }, [initialTournamentId, tournaments]);
+
   if (!isOpen) return null;
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const currentTournament = tournaments.find((t) => t.id === selectedTournamentId) || tournaments[0];
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (!fullName.trim() || !phone.trim()) {
+      setErrorMessage(
+        isRTL
+          ? 'يرجى إدخال الاسم ورقم الهاتف للمتابعة.'
+          : 'Please enter your name and phone number to continue.'
+      );
+      return;
+    }
+
+    if (!currentTournament) {
+      setErrorMessage(
+        isRTL ? 'يرجى اختيار بطولة للمشاركة بها.' : 'Please select a tournament.'
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      let activePlayer = user;
+      const sanitizedUsername = fullName.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const generatedEmail = `${sanitizedUsername || 'player'}_${Date.now()}@triplestars.player`;
 
-      // If not logged in, create a real player profile first
-      if (!activePlayer) {
-        if (!guestUsername.trim() || !guestDisplayName.trim() || !guestEmail.trim()) {
-          setErrorMessage('Please provide your gamer tag, full name, and email.');
-          setIsSubmitting(false);
-          return;
-        }
+      const playerProfile = await store.createPlayerProfile({
+        username: sanitizedUsername || `player_${Date.now()}`,
+        display_name: fullName.trim(),
+        email: generatedEmail,
+        phone: phone.trim(),
+      });
 
-        const newProfile = await store.createPlayerProfile({
-          username: guestUsername,
-          display_name: guestDisplayName,
-          email: guestEmail,
-          phone: guestPhone || undefined,
-        });
+      await store.registerPlayer(currentTournament.id, playerProfile, teamName.trim() || undefined);
 
-        await loginAsPlayer(newProfile.username);
-        activePlayer = newProfile;
-      }
-
-      await store.registerPlayer(tournament.id, activePlayer, teamName || undefined);
       setIsSubmitting(false);
       setIsSuccess(true);
+
       setTimeout(() => {
         setIsSuccess(false);
+        setFullName('');
+        setPhone('');
+        setTeamName('');
         onSuccess?.();
         onClose();
-      }, 1800);
+      }, 2500);
     } catch (err: any) {
       setIsSubmitting(false);
-      setErrorMessage(err.message || 'Registration could not be completed. You may already be registered.');
+      setErrorMessage(
+        err.message ||
+          (isRTL
+            ? 'تعذر إتمام التسجيل. قد تكون مسجلاً بالفعل في هذه البطولة.'
+            : 'Could not complete registration. You may already be registered.')
+      );
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-      <div className="relative w-full max-w-lg bg-surface-200 border border-border rounded-2xl p-6 shadow-elevated overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in select-none">
+      <div className="relative w-full max-w-md bg-surface-200 border border-white/10 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden">
+        
+        {/* Subtle Warm Amber Light Top Border */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-deep via-brand-orange to-brand-gold" />
+
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1.5 text-gray-400 hover:text-white rounded-lg hover:bg-surface-100 transition-colors"
+          className="absolute top-4 right-4 rtl:right-auto rtl:left-4 p-2 text-gray-400 hover:text-white rounded-full hover:bg-white/5 transition-colors z-10"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
 
         {isSuccess ? (
-          <div className="py-10 text-center space-y-3">
-            <CheckCircle className="w-14 h-14 text-emerald-400 mx-auto" />
-            <h3 className="text-2xl font-bold font-display uppercase text-white">Registration Confirmed</h3>
-            <p className="text-xs text-gray-400 max-w-xs mx-auto">
-              You are signed up for <span className="text-brand-orange font-semibold">{tournament.name}</span>. Settle the entry fee of{' '}
-              <strong className="text-white font-mono">{formatMAD(tournament.entry_fee_mad)}</strong> at Triple Stars cash desk.
-            </p>
+          <div className="py-8 text-center space-y-4 font-sans">
+            <div className="w-14 h-14 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">
+                {t('successTitle')}
+              </h3>
+              <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+                {t('successDesc')}
+              </p>
+            </div>
+            <div className="p-4 rounded-2xl bg-surface-300 border border-white/5 text-left rtl:text-right space-y-1.5 text-xs font-mono">
+              <div className="text-gray-400 flex justify-between">
+                <span>Player:</span> <strong className="text-white">{fullName}</strong>
+              </div>
+              <div className="text-gray-400 flex justify-between">
+                <span>Tournament:</span> <strong className="text-brand-orange">{currentTournament?.name}</strong>
+              </div>
+              <div className="text-gray-400 flex justify-between">
+                <span>WhatsApp:</span> <strong className="text-white">{phone}</strong>
+              </div>
+            </div>
           </div>
         ) : (
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-brand-orange">
-                Player Registration
-              </span>
-              <h2 className="text-xl font-display font-bold text-white uppercase mt-0.5">{tournament.name}</h2>
-              <p className="text-xs text-gray-400">
-                {tournament.game?.name} • Starts {formatDate(tournament.start_at)}
+              <div className="inline-flex items-center space-x-1.5 rtl:space-x-reverse px-2.5 py-0.5 rounded-full bg-brand-orange/10 border border-brand-orange/20 text-brand-orange text-[10px] font-mono font-semibold uppercase">
+                <span>{currentTournament?.game?.name || 'Esports'}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight mt-1">
+                {t('modalTitle')}
+              </h2>
+              <p className="text-xs text-gray-400 mt-0.5">
+                {t('modalDesc')}
               </p>
             </div>
 
             {errorMessage && (
-              <div className="p-3 rounded-xl bg-rose-950/40 border border-rose-800/60 text-rose-300 text-xs flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{errorMessage}</span>
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                {errorMessage}
               </div>
             )}
 
-            {/* Pricing Summary */}
-            <div className="p-3.5 rounded-xl bg-surface-300 border border-border space-y-2 text-xs">
-              {user ? (
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Competitor</span>
-                  <span className="font-bold text-white font-mono">@{user.username} ({user.display_name})</span>
-                </div>
-              ) : null}
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Entry Fee (Pay at Cash Desk)</span>
-                <span className="font-bold text-brand-orange font-mono">
-                  {formatMAD(tournament.entry_fee_mad)}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-400">Guaranteed Prize Pool</span>
-                <span className="font-bold text-emerald-400 font-mono">
-                  {formatMAD(tournament.prize_pool_mad)}
-                </span>
-              </div>
+            {/* Tournament Selector */}
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-gray-300 flex items-center space-x-1 rtl:space-x-reverse">
+                <Trophy className="w-3.5 h-3.5 text-brand-orange" />
+                <span>{t('fieldTournament')}</span>
+              </label>
+              <select
+                value={selectedTournamentId}
+                onChange={(e) => setSelectedTournamentId(e.target.value)}
+                className="w-full bg-surface-300 border border-white/10 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none transition-colors"
+              >
+                {tournaments.map((trn) => (
+                  <option key={trn.id} value={trn.id}>
+                    {trn.name} ({formatMAD(trn.prize_pool_mad)})
+                  </option>
+                ))}
+              </select>
             </div>
 
-            {/* If not logged in, ask for gamer info */}
-            {!user && (
-              <div className="space-y-3 p-3.5 rounded-xl bg-surface-100 border border-border">
-                <div className="text-[11px] font-bold text-brand-orange uppercase font-mono">
-                  Competitor Details
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                  <div className="space-y-1">
-                    <label className="block text-gray-300 font-semibold">Gamer Tag *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. striker_99"
-                      value={guestUsername}
-                      onChange={(e) => setGuestUsername(e.target.value)}
-                      className="w-full bg-surface-300 border border-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-gray-300 font-semibold">Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="e.g. Yassine Tazi"
-                      value={guestDisplayName}
-                      onChange={(e) => setGuestDisplayName(e.target.value)}
-                      className="w-full bg-surface-300 border border-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-gray-300 font-semibold">Email *</label>
-                    <input
-                      type="email"
-                      required
-                      placeholder="yassine@gmail.com"
-                      value={guestEmail}
-                      onChange={(e) => setGuestEmail(e.target.value)}
-                      className="w-full bg-surface-300 border border-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="block text-gray-300 font-semibold">Phone (Optional)</label>
-                    <input
-                      type="tel"
-                      placeholder="+212 600-000000"
-                      value={guestPhone}
-                      onChange={(e) => setGuestPhone(e.target.value)}
-                      className="w-full bg-surface-300 border border-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Optional Team Field */}
+            {/* Name Input */}
             <div className="space-y-1">
-              <label className="block text-xs font-semibold text-gray-300">
-                Team / Clan Name (Optional)
+              <label className="block text-xs font-medium text-gray-300 flex items-center space-x-1 rtl:space-x-reverse">
+                <User className="w-3.5 h-3.5 text-brand-orange" />
+                <span>{t('fieldName')} *</span>
               </label>
               <input
                 type="text"
-                placeholder="e.g. Atlas Esports"
-                value={teamName}
-                onChange={(e) => setTeamName(e.target.value)}
-                className="w-full bg-surface-300 border border-border rounded-xl px-3.5 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-brand-dark"
+                required
+                placeholder={isRTL ? 'مثال: يونس العلوي' : 'e.g. Younes Alami'}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                className="w-full bg-surface-300 border border-white/10 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-600 focus:outline-none transition-colors"
               />
             </div>
 
-            {/* Terms notice */}
-            <div className="p-2.5 rounded-lg bg-surface-100 border border-border flex items-start space-x-2 text-[11px] text-gray-400">
-              <ShieldCheck className="w-4 h-4 text-brand-orange flex-shrink-0 mt-0.5" />
-              <span>
-                Please check in at the Triple Stars front desk at least 15 minutes before match time.
-              </span>
+            {/* Phone Input */}
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-gray-300 flex items-center space-x-1 rtl:space-x-reverse">
+                <Phone className="w-3.5 h-3.5 text-brand-orange" />
+                <span>{t('fieldPhone')} *</span>
+              </label>
+              <input
+                type="tel"
+                required
+                placeholder="06 12 34 56 78"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full bg-surface-300 border border-white/10 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-600 focus:outline-none transition-colors"
+              />
             </div>
 
-            {/* Buttons */}
-            <div className="flex items-center space-x-3 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-2.5 rounded-xl bg-surface-100 hover:bg-surface-50 text-gray-300 font-semibold text-xs transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 py-2.5 rounded-xl bg-brand-dark hover:bg-brand-orange text-white font-bold text-xs uppercase tracking-wider shadow-orange-sm transition-colors flex items-center justify-center space-x-1.5"
-              >
-                <UserCheck className="w-4 h-4" />
-                <span>Confirm ({formatMAD(tournament.entry_fee_mad)})</span>
-              </button>
+            {/* Optional Team / Clan */}
+            <div className="space-y-1">
+              <label className="block text-xs font-medium text-gray-400">
+                {t('fieldTeam')}
+              </label>
+              <input
+                type="text"
+                placeholder={isRTL ? 'مثال: Atlas Elite' : 'e.g. Atlas Elite'}
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                className="w-full bg-surface-300 border border-white/10 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white placeholder-gray-600 focus:outline-none transition-colors"
+              />
             </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-brand-deep via-brand-dark to-brand-orange hover:opacity-90 text-white font-medium text-xs sm:text-sm shadow-md transition-all cursor-pointer"
+            >
+              {isSubmitting ? t('btnSubmitting') : t('btnSubmit')}
+            </button>
           </form>
         )}
       </div>
