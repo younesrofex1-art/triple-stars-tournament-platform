@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Trophy, Users, Swords, Sparkles, ExternalLink, Calendar, MapPin, CheckCircle, Radio } from 'lucide-react';
 import { Tournament } from '../../types';
 import { formatMAD, formatDate, getStatusBadge } from '../../utils/formatters';
 import { soundManager } from '../../utils/sound';
@@ -16,10 +15,9 @@ export const TournamentsSlide: React.FC<TournamentsSlideProps> = ({
   onOpenRegister,
   onViewBracket,
 }) => {
-  const { t, isRTL } = useLanguage();
+  const { t } = useLanguage();
   const [selectedGame, setSelectedGame] = useState<string>('ALL');
 
-  // Extract unique games for filtering
   const games = ['ALL', ...Array.from(new Set(tournaments.map((t) => t.game?.name).filter(Boolean)))];
 
   const filteredTournaments = selectedGame === 'ALL'
@@ -27,32 +25,25 @@ export const TournamentsSlide: React.FC<TournamentsSlideProps> = ({
     : tournaments.filter((trn) => trn.game?.name === selectedGame);
 
   return (
-    <div className="w-screen h-screen flex-shrink-0 flex items-center justify-center p-4 sm:p-8 lg:p-14 relative overflow-hidden select-none">
-      
-      {/* Glow */}
-      <div className="absolute top-1/3 right-1/3 w-[500px] h-[500px] bg-brand-orange/10 rounded-full blur-[140px] pointer-events-none" />
-
-      <div className="max-w-7xl w-full mx-auto space-y-5 sm:space-y-6 relative z-10 flex flex-col justify-center h-full max-h-[90vh]">
+    <div className="w-screen h-screen flex-shrink-0 flex items-center justify-center p-6 sm:p-12 lg:p-16 relative overflow-hidden select-none">
+      <div className="max-w-6xl w-full mx-auto space-y-5 sm:space-y-6 relative z-10 flex flex-col justify-center h-full max-h-[88vh]">
         
-        {/* Header & Game Filter Chips */}
+        {/* Header & Filter Row */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2 rtl:space-x-reverse">
-              <Swords className="w-4 h-4 text-brand-orange" />
-              <span className="text-xs font-mono font-bold uppercase tracking-wider text-brand-orange">
-                {t('navScene2')}
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-display text-white uppercase tracking-tight mt-1">
-              {t('tournamentsHeading')}
+            <span className="text-[11px] font-mono text-gray-500 uppercase tracking-widest block">
+              {t('navScene2')}
+            </span>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-white uppercase tracking-tight mt-1">
+              {t('tournamentsTitle')}
             </h2>
-            <p className="text-xs sm:text-sm text-gray-300 max-w-xl mt-0.5">
-              {t('tournamentsSubtitle')}
+            <p className="text-xs sm:text-sm text-gray-400 max-w-xl mt-0.5">
+              {t('tournamentsDesc')}
             </p>
           </div>
 
-          {/* Filter Pills */}
-          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-2xl bg-surface-200/90 border border-border/80 backdrop-blur-xl">
+          {/* Clean Filter Pills */}
+          <div className="flex flex-wrap items-center gap-1.5 p-1 rounded-full bg-surface-200/80 border border-white/10 backdrop-blur-xl">
             {games.map((g) => (
               <button
                 key={g as string}
@@ -61,9 +52,9 @@ export const TournamentsSlide: React.FC<TournamentsSlideProps> = ({
                   setSelectedGame(g as string);
                 }}
                 onMouseEnter={() => soundManager.playHover()}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-mono font-medium transition-all ${
                   selectedGame === g
-                    ? 'bg-brand-orange text-white shadow-orange-sm'
+                    ? 'bg-white text-black font-semibold shadow-sm'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
@@ -73,11 +64,11 @@ export const TournamentsSlide: React.FC<TournamentsSlideProps> = ({
           </div>
         </div>
 
-        {/* Horizontal Card Row / Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 overflow-y-auto max-h-[58vh] pr-1 scrollbar-none">
+        {/* Monolithic Spec Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto max-h-[58vh] pr-1 scrollbar-none">
           {filteredTournaments.length === 0 ? (
-            <div className="col-span-full py-16 text-center text-gray-500 font-mono">
-              No tournaments found for this filter.
+            <div className="col-span-full py-16 text-center text-gray-500 font-mono text-xs">
+              No tournaments available under this category.
             </div>
           ) : (
             filteredTournaments.map((tournament) => {
@@ -87,55 +78,49 @@ export const TournamentsSlide: React.FC<TournamentsSlideProps> = ({
               return (
                 <div
                   key={tournament.id}
-                  className="group relative rounded-3xl bg-surface-200/90 hover:bg-surface-100/90 border border-border/80 hover:border-brand-orange/70 backdrop-blur-xl p-5 shadow-elevated transition-all duration-300 flex flex-col justify-between hover:-translate-y-1 hover:shadow-neon-orange"
+                  className="group relative rounded-2xl tesla-card p-5 flex flex-col justify-between"
                 >
-                  {/* Top Bar: Game Name & Status Badge */}
+                  {/* Top Bar */}
                   <div>
-                    <div className="flex items-center justify-between gap-2 mb-3">
-                      <span className="px-2.5 py-1 rounded-lg bg-surface-300 border border-white/10 text-cyan-400 font-mono text-[10px] font-bold uppercase">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-mono font-semibold text-brand-orange uppercase">
                         {tournament.game?.name || 'Esports'}
                       </span>
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase flex items-center space-x-1.5 rtl:space-x-reverse ${badge.class}`}>
-                        {isLive && <Radio className="w-2.5 h-2.5 text-rose-400 animate-ping" />}
+                      <span className={`px-2 py-0.5 rounded-full text-[9px] font-mono font-medium uppercase flex items-center space-x-1 rtl:space-x-reverse ${
+                        isLive ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30' : 'bg-white/5 text-gray-400 border border-white/10'
+                      }`}>
+                        {isLive && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />}
                         <span>{badge.label}</span>
                       </span>
                     </div>
 
-                    {/* Tournament Title */}
-                    <h3 className="text-lg sm:text-xl font-bold font-display text-white uppercase group-hover:text-brand-orange transition-colors">
+                    <h3 className="text-base sm:text-lg font-bold text-white uppercase group-hover:text-gray-100 transition-colors">
                       {tournament.name}
                     </h3>
-                    <div className="flex items-center space-x-3 rtl:space-x-reverse text-xs text-gray-400 mt-1 font-mono">
-                      <span className="flex items-center space-x-1 rtl:space-x-reverse">
-                        <Calendar className="w-3.5 h-3.5 text-brand-orange" />
-                        <span>{formatDate(tournament.start_at)}</span>
-                      </span>
-                      <span className="flex items-center space-x-1 rtl:space-x-reverse">
-                        <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                        <span className="truncate max-w-[120px]">{tournament.location || 'Triple Stars Arena'}</span>
-                      </span>
+                    <div className="text-[11px] text-gray-500 font-mono mt-1">
+                      {formatDate(tournament.start_at)} • {tournament.location || 'Triple Stars Arena'}
                     </div>
                   </div>
 
-                  {/* Pricing and Format Grid */}
-                  <div className="my-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-2 text-center font-mono">
-                    <div className="p-2 rounded-xl bg-surface-300/80 border border-white/5">
-                      <div className="text-[9px] text-gray-400 uppercase">{t('prizePool')}</div>
-                      <div className="text-xs sm:text-sm font-bold text-emerald-400">{formatMAD(tournament.prize_pool_mad)}</div>
+                  {/* Clean Spec Rows */}
+                  <div className="my-4 py-3 border-y border-white/5 grid grid-cols-3 gap-2 font-mono text-center">
+                    <div>
+                      <span className="text-[9px] text-gray-500 uppercase block">{t('prizePool')}</span>
+                      <span className="text-xs font-semibold text-emerald-400 mt-0.5 block">{formatMAD(tournament.prize_pool_mad)}</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-surface-300/80 border border-white/5">
-                      <div className="text-[9px] text-gray-400 uppercase">{t('entryFee')}</div>
-                      <div className="text-xs sm:text-sm font-bold text-brand-orange">{formatMAD(tournament.entry_fee_mad)}</div>
+                    <div>
+                      <span className="text-[9px] text-gray-500 uppercase block">{t('entryFee')}</span>
+                      <span className="text-xs font-semibold text-white mt-0.5 block">{formatMAD(tournament.entry_fee_mad)}</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-surface-300/80 border border-white/5">
-                      <div className="text-[9px] text-gray-400 uppercase">{t('format')}</div>
-                      <div className="text-[11px] font-bold text-gray-200 uppercase truncate">
+                    <div>
+                      <span className="text-[9px] text-gray-500 uppercase block">{t('format')}</span>
+                      <span className="text-[10px] font-semibold text-gray-400 uppercase mt-0.5 block truncate">
                         {tournament.format?.replace('_', ' ') || 'SINGLE ELIM'}
-                      </div>
+                      </span>
                     </div>
                   </div>
 
-                  {/* Buttons */}
+                  {/* Action Buttons */}
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     <button
                       onClick={() => {
@@ -143,10 +128,9 @@ export const TournamentsSlide: React.FC<TournamentsSlideProps> = ({
                         onOpenRegister(tournament.id);
                       }}
                       onMouseEnter={() => soundManager.playHover()}
-                      className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-brand-dark to-brand-orange hover:from-brand-orange hover:to-amber-500 text-white font-mono font-black text-xs uppercase tracking-wider shadow-orange-sm transition-all flex items-center justify-center space-x-1.5 rtl:space-x-reverse"
+                      className="flex-1 py-2 rounded-xl bg-white hover:bg-gray-100 text-black font-mono font-semibold text-xs transition-all"
                     >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>{t('btnDirectRegister')}</span>
+                      {t('btnRegisterNow')}
                     </button>
 
                     <button
@@ -155,11 +139,9 @@ export const TournamentsSlide: React.FC<TournamentsSlideProps> = ({
                         onViewBracket(tournament.id);
                       }}
                       onMouseEnter={() => soundManager.playHover()}
-                      title="View Interactive Bracket"
-                      className="px-3 py-2.5 rounded-xl bg-surface-300 hover:bg-surface-50 border border-border/80 text-gray-300 hover:text-white font-mono text-xs font-bold transition-colors flex items-center space-x-1 rtl:space-x-reverse"
+                      className="px-3.5 py-2 rounded-xl bg-surface-200 hover:bg-surface-100 border border-white/10 text-gray-300 hover:text-white font-mono text-xs font-medium transition-colors"
                     >
-                      <span>{t('btnViewBracket')}</span>
-                      <ExternalLink className="w-3.5 h-3.5 text-brand-orange" />
+                      {t('btnOpenBracket')}
                     </button>
                   </div>
                 </div>

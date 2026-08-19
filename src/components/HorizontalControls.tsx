@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, ChevronRight, Sparkles, Compass } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { soundManager } from '../utils/sound';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -23,17 +23,19 @@ export const HorizontalControls: React.FC<HorizontalControlsProps> = ({
   const { t, isRTL } = useLanguage();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none p-3 sm:p-5 select-none">
-      <div className="max-w-[1700px] mx-auto flex items-center justify-between pointer-events-auto">
+    <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none p-4 sm:p-6 select-none">
+      <div className="max-w-[1600px] mx-auto flex items-center justify-between pointer-events-auto">
         
-        {/* Left: Scroll / Drag Hint */}
-        <div className="hidden md:flex items-center space-x-2.5 rtl:space-x-reverse px-3.5 py-1.5 rounded-xl bg-surface-300/80 backdrop-blur-xl border border-white/5 text-[11px] font-mono text-gray-400">
-          <Compass className="w-3.5 h-3.5 text-brand-orange animate-spin [animation-duration:8s]" />
-          <span className="tracking-widest uppercase">{t('scrollHint')}</span>
+        {/* Left: Section Indicator */}
+        <div className="hidden sm:flex items-center space-x-2 rtl:space-x-reverse px-3 py-1.5 rounded-full bg-surface-200/80 backdrop-blur-xl border border-white/10 text-xs font-mono text-gray-400">
+          <span className="w-1.5 h-1.5 rounded-full bg-brand-orange" />
+          <span className="font-semibold text-white">0{currentSlideIndex + 1}</span>
+          <span>/</span>
+          <span>0{totalSlides}</span>
         </div>
 
-        {/* Center: Slide Indicator Numbers & Quick Jump */}
-        <div className="flex items-center space-x-1.5 sm:space-x-2 rtl:space-x-reverse px-3 py-1.5 rounded-2xl bg-surface-300/85 backdrop-blur-xl border border-white/10 shadow-elevated">
+        {/* Center: Clean Minimal Dots */}
+        <div className="flex items-center space-x-1.5 rtl:space-x-reverse px-3 py-2 rounded-full bg-surface-200/80 backdrop-blur-xl border border-white/10 shadow-pill">
           {Array.from({ length: totalSlides }).map((_, idx) => {
             const isActive = currentSlideIndex === idx;
             return (
@@ -44,19 +46,17 @@ export const HorizontalControls: React.FC<HorizontalControlsProps> = ({
                   onSelectSlide(idx);
                 }}
                 onMouseEnter={() => soundManager.playHover()}
-                className={`transition-all duration-300 rounded-lg flex items-center justify-center font-mono font-black ${
+                className={`transition-all duration-300 rounded-full ${
                   isActive
-                    ? 'w-7 sm:w-9 h-6 sm:h-7 bg-brand-orange text-white text-xs shadow-orange-sm scale-105'
-                    : 'w-6 sm:w-7 h-6 sm:h-7 text-gray-500 hover:text-gray-300 hover:bg-white/5 text-[11px]'
+                    ? 'w-6 h-1.5 bg-white'
+                    : 'w-1.5 h-1.5 bg-white/30 hover:bg-white/60'
                 }`}
-              >
-                0{idx + 1}
-              </button>
+              />
             );
           })}
         </div>
 
-        {/* Right: Prev / Next Buttons & Quick CTA */}
+        {/* Right: Minimal Arrow Navigation & Direct CTA */}
         <div className="flex items-center space-x-2 sm:space-x-3 rtl:space-x-reverse">
           {/* Quick Register Trigger */}
           <button
@@ -65,13 +65,12 @@ export const HorizontalControls: React.FC<HorizontalControlsProps> = ({
               onOpenRegister();
             }}
             onMouseEnter={() => soundManager.playHover()}
-            className="hidden sm:flex items-center space-x-2 rtl:space-x-reverse px-3.5 py-2 rounded-xl bg-gradient-to-r from-brand-dark to-brand-orange hover:from-brand-orange hover:to-amber-500 text-white text-xs font-bold font-display uppercase tracking-wider shadow-orange-sm transition-all hover:scale-105"
+            className="hidden md:flex items-center px-4 py-2 rounded-full bg-white hover:bg-gray-100 text-black text-xs font-mono font-semibold transition-all hover:scale-105"
           >
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span>{t('heroBtnRegister')}</span>
+            <span>{t('btnClaimPass')}</span>
           </button>
 
-          {/* Prev Slide Arrow */}
+          {/* Prev Arrow */}
           <button
             onClick={() => {
               soundManager.playSlide();
@@ -79,13 +78,12 @@ export const HorizontalControls: React.FC<HorizontalControlsProps> = ({
             }}
             onMouseEnter={() => soundManager.playHover()}
             disabled={currentSlideIndex === 0}
-            className="p-2 sm:px-3 sm:py-2 rounded-xl bg-surface-200/90 hover:bg-surface-100 disabled:opacity-30 disabled:cursor-not-allowed border border-border/80 backdrop-blur-xl text-gray-200 hover:text-white transition-all flex items-center space-x-1 rtl:space-x-reverse text-xs font-mono font-bold"
+            className="w-9 h-9 rounded-full bg-surface-200/80 hover:bg-surface-100/90 disabled:opacity-20 disabled:cursor-not-allowed border border-white/10 backdrop-blur-xl text-white flex items-center justify-center transition-all"
           >
-            {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            <span className="hidden sm:inline">{t('prev')}</span>
+            {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
           </button>
 
-          {/* Next Slide Arrow */}
+          {/* Next Arrow */}
           <button
             onClick={() => {
               soundManager.playSlide();
@@ -93,10 +91,9 @@ export const HorizontalControls: React.FC<HorizontalControlsProps> = ({
             }}
             onMouseEnter={() => soundManager.playHover()}
             disabled={currentSlideIndex === totalSlides - 1}
-            className="p-2 sm:px-3 sm:py-2 rounded-xl bg-surface-200/90 hover:bg-surface-100 disabled:opacity-30 disabled:cursor-not-allowed border border-border/80 backdrop-blur-xl text-gray-200 hover:text-white transition-all flex items-center space-x-1 rtl:space-x-reverse text-xs font-mono font-bold"
+            className="w-9 h-9 rounded-full bg-surface-200/80 hover:bg-surface-100/90 disabled:opacity-20 disabled:cursor-not-allowed border border-white/10 backdrop-blur-xl text-white flex items-center justify-center transition-all"
           >
-            <span className="hidden sm:inline">{t('next')}</span>
-            {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
           </button>
         </div>
       </div>

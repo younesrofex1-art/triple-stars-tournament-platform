@@ -10,43 +10,42 @@ interface Translations {
 }
 
 export const translations: Translations = {
-  // Brand & Slogans
   brandTitle: {
     en: 'TRIPLE STARS',
     ar: 'تريبل ستارز',
   },
   brandSubtitle: {
-    en: 'ESPORTS CHAMPIONSHIP CIRCUIT',
-    ar: 'دوري بطولات الرياضات الإلكترونية',
+    en: 'ESPORTS CIRCUIT',
+    ar: 'دوري الرياضات الإلكترونية',
   },
-  liveArenaStatus: {
-    en: 'LIVE ARENA ACTIVE',
-    ar: 'القاعة التنافسية المباشرة',
+  liveBadge: {
+    en: 'ARENA ONLINE',
+    ar: 'الساحة المباشرة',
   },
   // HUD Navigation
   navScene1: {
-    en: '01 // ARENA',
-    ar: '01 // الساحة',
+    en: '01 // OVERVIEW',
+    ar: '01 // نظرة عامة',
   },
   navScene2: {
-    en: '02 // SHOWDOWNS',
+    en: '02 // TOURNAMENTS',
     ar: '02 // البطولات',
   },
   navScene3: {
-    en: '03 // LIVE BRACKET',
-    ar: '03 // الشجرة الحية',
+    en: '03 // BRACKET',
+    ar: '03 // الشجرة التنافسية',
   },
   navScene4: {
-    en: '04 // CHAMPIONS',
-    ar: '04 // الأبطال والصدارة',
+    en: '04 // STANDINGS',
+    ar: '04 // جدول الصدارة',
   },
   navScene5: {
-    en: '05 // ARENA PASS',
-    ar: '05 // بطاقة الدخول',
+    en: '05 // ACCESS PASS',
+    ar: '05 // بطاقة المشاركة',
   },
   scrollHint: {
-    en: 'SCROLL OR DRAG HORIZONTALLY',
-    ar: 'اسحب أو مرر أفقياً للتنقل',
+    en: 'HORIZONTAL DRAG / SCROLL',
+    ar: 'التمرير الأفقي',
   },
   prev: {
     en: 'PREV',
@@ -57,261 +56,193 @@ export const translations: Translations = {
     ar: 'التالي',
   },
   adminPortal: {
-    en: 'ADMIN PORTAL',
-    ar: 'بوابة الإدارة',
+    en: 'ADMIN CONSOLE',
+    ar: 'لوحة الإدارة',
   },
-  soundFx: {
-    en: 'SOUND FX',
-    ar: 'المؤثرات الصوتية',
+  audioToggle: {
+    en: 'AUDIO',
+    ar: 'الصوت',
   },
   // Hero Slide
-  heroBadge: {
-    en: 'MOROCCO PREMIER ESPORTS CIRCUIT',
-    ar: 'دوري النخبة للرياضات الإلكترونية بالمغرب',
+  heroSubtitle: {
+    en: 'CASABLANCA COMPETITIVE ESPORTS PLATFORM',
+    ar: 'المنصة التنافسية الرسمية للرياضات الإلكترونية بالمغرب',
   },
   heroHeading1: {
-    en: 'COMPETE.',
-    ar: 'تنافس.',
+    en: 'PRECISION.',
+    ar: 'دقة.',
   },
   heroHeading2: {
-    en: 'DOMINATE.',
-    ar: 'سيطر.',
+    en: 'COMPETITION.',
+    ar: 'منافسة.',
   },
   heroHeading3: {
-    en: 'CLAIM GLORY.',
-    ar: 'احصد المجد.',
+    en: 'PERFORMANCE.',
+    ar: 'أداء عالي.',
   },
   heroDesc: {
-    en: 'Step into the arena. Instant direct tournament entry with zero registration barriers. Live bracket progression, real-time stage sync, and guaranteed MAD cash pools.',
-    ar: 'ادخل الساحة التنافسية. تسجيل فوري ومباشر في أقوى البطولات بدون تعقيد. متابعة حية لشجرة المباريات وتوزيع مباشر لجوائز الدرهم المغربي.',
+    en: 'Direct guest registration with zero friction. Live bracket telemetry, real-time stage progression, and guaranteed cash pools in Moroccan Dirham (MAD).',
+    ar: 'تسجيل فوري ومباشر دون الحاجة لإنشاء حساب. متابعة لحظية لشجرة المباريات وتوزيع مضمون للجوائز بالدرهم المغربي.',
   },
-  heroBtnRegister: {
-    en: 'CLAIM ARENA PASS',
-    ar: 'احصل على بطاقة البطولة',
+  btnClaimPass: {
+    en: 'GET PASS',
+    ar: 'حجز بطاقة الدخول',
   },
-  heroBtnExplore: {
-    en: 'EXPLORE TOURNAMENTS',
-    ar: 'تصفح البطولات الحية',
+  btnExploreShowdowns: {
+    en: 'VIEW TOURNAMENTS',
+    ar: 'استعراض البطولات',
   },
-  heroNextMatchCountdown: {
-    en: 'NEXT GRAND TOURNAMENT STARTS IN',
-    ar: 'البطولة الكبرى القادمة تنطلق خلال',
+  nextEvent: {
+    en: 'NEXT EVENT IN',
+    ar: 'البطولة القادمة بعد',
   },
   days: {
-    en: 'DAYS',
-    ar: 'أيام',
+    en: 'D',
+    ar: 'يوم',
   },
   hours: {
-    en: 'HOURS',
-    ar: 'ساعات',
+    en: 'H',
+    ar: 'ساعة',
   },
   mins: {
-    en: 'MINS',
-    ar: 'دقائق',
+    en: 'M',
+    ar: 'دقيقة',
   },
   secs: {
-    en: 'SECS',
-    ar: 'ثواني',
+    en: 'S',
+    ar: 'ثانية',
   },
-  statPrizeDistributed: {
-    en: 'PRIZE POOL GUARANTEED',
+  statPrizePool: {
+    en: 'GUARANTEED PRIZES',
     ar: 'مجموع الجوائز المضمونة',
   },
-  statVerifiedWarriors: {
-    en: 'REGISTERED FIGHTERS',
-    ar: 'المقاتلون المسجلون',
+  statTournaments: {
+    en: 'ACTIVE EVENTS',
+    ar: 'البطولات المجدولة',
   },
-  statLiveShowdowns: {
-    en: 'CHAMPIONSHIP EVENTS',
-    ar: 'بطولات نشطة ومجدولة',
+  statFighters: {
+    en: 'REGISTERED PLAYERS',
+    ar: 'اللاعبون المسجلون',
   },
-  statArenaStations: {
-    en: 'ARENA RIGS & STATIONS',
-    ar: 'محطات اللعب التنافسية',
+  statStations: {
+    en: 'ARENA STATIONS',
+    ar: 'منصات اللعب',
   },
   // Tournaments Slide
-  tournamentsHeading: {
-    en: 'ACTIVE & UPCOMING BATTLES',
-    ar: 'البطولات النشطة والقادمة',
+  tournamentsTitle: {
+    en: 'TOURNAMENT SCHEDULE',
+    ar: 'جدول البطولات',
   },
-  tournamentsSubtitle: {
-    en: 'Select your battleground. Direct instant entry with phone & gamer tag.',
-    ar: 'اختر ساحة معركتك. تسجيل فوري مباشر برقم الهاتف واسمك في اللعبة.',
+  tournamentsDesc: {
+    en: 'Select an event to register immediately with your gamer tag and phone number.',
+    ar: 'اختر البطولة وسجل فورياً برقم هاتفك واسمك داخل اللعبة.',
   },
   filterAll: {
-    en: 'ALL GAMES',
-    ar: 'كل الألعاب',
+    en: 'ALL',
+    ar: 'الكل',
   },
   entryFee: {
-    en: 'ENTRY FEE',
-    ar: 'رسوم الدخول',
+    en: 'ENTRY',
+    ar: 'رسوم المشاركة',
   },
   prizePool: {
     en: 'PRIZE POOL',
-    ar: 'مجموع الجوائز',
-  },
-  slots: {
-    en: 'SLOTS',
-    ar: 'المقاعد',
+    ar: 'الجوائز',
   },
   format: {
     en: 'FORMAT',
     ar: 'النظام',
   },
   location: {
-    en: 'LOCATION',
-    ar: 'الموقع',
+    en: 'ARENA',
+    ar: 'المقر',
   },
-  btnDirectRegister: {
-    en: 'INSTANT REGISTER',
+  btnRegisterNow: {
+    en: 'REGISTER',
     ar: 'تسجيل فوري',
   },
-  btnViewBracket: {
-    en: 'LIVE BRACKET',
-    ar: 'شجرة المباريات',
-  },
-  statusLive: {
-    en: 'LIVE NOW',
-    ar: 'مباشر الآن',
-  },
-  statusOpen: {
-    en: 'REGISTRATION OPEN',
-    ar: 'التسجيل مفتوح',
-  },
-  statusClosed: {
-    en: 'REGISTRATION CLOSED',
-    ar: 'اكتمل التسجيل',
-  },
-  statusCheckIn: {
-    en: 'CHECK-IN OPEN',
-    ar: 'تأكيد الحضور مفتوح',
-  },
-  statusCompleted: {
-    en: 'COMPLETED',
-    ar: 'انتهت البطولة',
+  btnOpenBracket: {
+    en: 'BRACKET',
+    ar: 'الشجرة',
   },
   // Bracket Slide
-  bracketHeading: {
-    en: 'THE ARENA BRACKET MATRIX',
-    ar: 'شجرة المباريات التنافسية الحية',
+  bracketTitle: {
+    en: 'LIVE BRACKET MATRIX',
+    ar: 'شجرة المباريات الحية',
   },
-  bracketSubtitle: {
-    en: 'Real-time bracket synchronization, live scores, and instant advancement paths.',
-    ar: 'مزامنة لحظية للنتائج، بطاقات اللاعبين، والمسار نحو الكأس الذهبية.',
+  bracketDesc: {
+    en: 'Interactive stage telemetry and real-time match advancement.',
+    ar: 'متابعة مباشرة ومزامنة لحظية لنتائج المباريات وتأهل الفرق.',
   },
-  selectTournament: {
-    en: 'SELECT TOURNAMENT',
-    ar: 'اختر البطولة',
+  // Standings / Leaderboard Slide
+  standingsTitle: {
+    en: 'GLOBAL STANDINGS',
+    ar: 'لوحة الصدارة والتصنيف',
   },
-  roundQuarter: {
-    en: 'QUARTERFINALS',
-    ar: 'ربع النهائي',
-  },
-  roundSemi: {
-    en: 'SEMIFINALS',
-    ar: 'نصف النهائي',
-  },
-  roundFinal: {
-    en: 'GRAND FINALS',
-    ar: 'النهائي الكبير',
-  },
-  roundBronze: {
-    en: '3RD PLACE BATTLE',
-    ar: 'مباراة المركز الثالث',
-  },
-  winnerCrown: {
-    en: 'TOURNAMENT CHAMPION',
-    ar: 'بطل البطولة',
-  },
-  matchVs: {
-    en: 'VS',
-    ar: 'ضد',
-  },
-  tbd: {
-    en: 'TBD',
-    ar: 'قيد التحديد',
-  },
-  // Leaderboard / Hall of Champions
-  hallHeading: {
-    en: 'HALL OF LEGENDS & STANDINGS',
-    ar: 'لوحة الأبطال والصدارة العالمية',
-  },
-  hallSubtitle: {
-    en: 'The top ranked gladiators across the Moroccan esports championship series.',
-    ar: 'أفضل اللاعبين والمحترفين في دوري تريبل ستارز للرياضات الإلكترونية.',
-  },
-  rankGold: {
-    en: '1ST RANK // GRAND CHAMPION',
-    ar: 'المركز الأول // البطل الذهبي',
-  },
-  rankSilver: {
-    en: '2ND RANK // CONTENDER',
-    ar: 'المركز الثاني // الوصيف',
-  },
-  rankBronze: {
-    en: '3RD RANK // WARRIOR',
-    ar: 'المركز الثالث // المحارب',
+  standingsDesc: {
+    en: 'Verified competitor performance rankings across all official circuits.',
+    ar: 'ترتيب اللاعبين والفرق وفقاً لنسبة الانتصارات والأداء في البطولات.',
   },
   winRate: {
     en: 'WIN RATE',
     ar: 'نسبة الفوز',
   },
-  matches: {
-    en: 'MATCHES',
-    ar: 'المباريات',
+  rank1Title: {
+    en: 'RANK 1 // LEADER',
+    ar: 'المركز الأول // المتصدر',
   },
-  earnings: {
-    en: 'TOTAL EARNINGS',
-    ar: 'مجموع الأرباح',
+  rank2Title: {
+    en: 'RANK 2 // CONTENDER',
+    ar: 'المركز الثاني // الوصيف',
   },
-  streak: {
-    en: 'WIN STREAK',
-    ar: 'سلسلة الانتصارات',
+  rank3Title: {
+    en: 'RANK 3 // FINALIST',
+    ar: 'المركز الثالث',
   },
-  // Arena Pass / Direct Registration Slide
-  passHeading: {
-    en: 'DIRECT ARENA PASS TERMINAL',
-    ar: 'محطة التسجيل المباشر وبطاقة الساحة',
+  // Pass / Direct Registration
+  passTitle: {
+    en: 'ARENA PASS TERMINAL',
+    ar: 'إصدار بطاقة المشاركة الفورية',
   },
-  passSubtitle: {
-    en: 'No login required. Submit your gamer tag and phone number to reserve your spot instantly.',
-    ar: 'بدون الحاجة لإنشاء حساب. اكتب اسمك ورقم هاتفك لحجز مقعدك فورياً.',
+  passDesc: {
+    en: 'Guest registration. No account required. Provide your gamer tag and WhatsApp number.',
+    ar: 'تسجيل مباشر للضيوف دون حساب. أدخل اسمك في اللعبة ورقم الواتساب فقط.',
   },
-  fieldName: {
-    en: 'FULL NAME / DISPLAY NAME',
+  fullName: {
+    en: 'Full Name',
     ar: 'الاسم الكامل',
   },
-  fieldGamerTag: {
-    en: 'GAMER TAG / IGN',
-    ar: 'اسمك داخل اللعبة (IGN)',
+  gamerTag: {
+    en: 'Gamer Tag / IGN',
+    ar: 'اسم اللاعب (IGN)',
   },
-  fieldPhone: {
-    en: 'PHONE NUMBER / WHATSAPP',
+  phoneNumber: {
+    en: 'Phone / WhatsApp',
     ar: 'رقم الهاتف / الواتساب',
   },
-  fieldTournament: {
-    en: 'SELECT TOURNAMENT',
-    ar: 'اختر البطولة المراد المشاركة بها',
+  tournamentSelect: {
+    en: 'Tournament',
+    ar: 'البطولة',
   },
-  fieldTeam: {
-    en: 'TEAM / CLAN (OPTIONAL)',
-    ar: 'اسم الفريق / الكلان (اختياري)',
+  teamName: {
+    en: 'Team / Clan (Optional)',
+    ar: 'الفريق / الكلان (اختياري)',
   },
-  btnSubmitPass: {
-    en: 'ISSUE ARENA PASS & REGISTER',
-    ar: 'إصدار بطاقة المشاركة والتسجيل',
+  submitPass: {
+    en: 'CONFIRM REGISTRATION',
+    ar: 'تأكيد التسجيل',
   },
   passNotice: {
-    en: 'Admin will confirm your registration via WhatsApp / SMS. Settle entry fee at the arena cash desk.',
-    ar: 'سيتم مراجعة وتأكيد تسجيلك من قبل الإدارة عبر الواتساب. يتم دفع الرسوم في مكتب الاستقبال.',
+    en: 'Registration confirmed directly with tournament desk upon check-in.',
+    ar: 'يتم تأكيد وتفعيل التسجيل مباشرة في مكتب استقبال تريبل ستارز.',
   },
-  registrationSuccess: {
-    en: 'ARENA PASS ISSUED SUCCESSFULLY!',
-    ar: 'تم إصدار بطاقة البطولة بنجاح!',
+  successTitle: {
+    en: 'PASS ISSUED',
+    ar: 'تم تسجيلك بنجاح',
   },
-  successDetail: {
-    en: 'Your spot has been queued. Triple Stars staff will reach out to verify your registration.',
-    ar: 'تم حجز مقعدك بنجاح. سيتواصل معك طاقم تريبل ستارز لتأكيد موعد المباراة.',
+  successDesc: {
+    en: 'Your tournament entry has been queued in the system. Organizers will confirm your slot.',
+    ar: 'تم تسجيل بياناتك بنجاح في قائمة الانتظار، وسيتواصل معك المنظمون للتأكيد.',
   },
 };
 

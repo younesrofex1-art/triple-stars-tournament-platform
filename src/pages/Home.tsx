@@ -4,7 +4,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useRealtimeStore } from '../hooks/useRealtimeStore';
 import { HorizontalHUD } from '../components/HorizontalHUD';
 import { HorizontalControls } from '../components/HorizontalControls';
-import { CyberCanvasBackground } from '../components/CyberCanvasBackground';
+import { TeslaBackground } from '../components/TeslaBackground';
 import { ArenaPassModal } from '../components/ArenaPassModal';
 import { HeroSlide } from '../components/slides/HeroSlide';
 import { TournamentsSlide } from '../components/slides/TournamentsSlide';
@@ -28,20 +28,15 @@ export const Home: React.FC = () => {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [scrollProgress, setScrollProgress] = useState(0);
 
-  // Modal State
   const [isPassModalOpen, setIsPassModalOpen] = useState(false);
   const [modalTournamentId, setModalTournamentId] = useState<string | undefined>(undefined);
-
-  // Active bracket tournament selection
   const [activeBracketTrnId, setActiveBracketTrnId] = useState<string | undefined>(undefined);
 
-  // Ref tracking current slide for gesture handlers
   const currentSlideRef = useRef(0);
   currentSlideRef.current = currentSlideIndex;
 
   const isAnimatingRef = useRef(false);
 
-  // Smooth slide navigation using GSAP
   const navigateToSlide = (targetIndex: number) => {
     if (targetIndex < 0 || targetIndex >= TOTAL_SLIDES) return;
     if (!trackRef.current) return;
@@ -76,7 +71,7 @@ export const Home: React.FC = () => {
     }
   };
 
-  // Wheel listener for horizontal side-scrolling with debounce/inertia
+  // Wheel listener
   useEffect(() => {
     let lastWheelTime = 0;
     const wheelThreshold = 35;
@@ -115,7 +110,7 @@ export const Home: React.FC = () => {
     return () => window.removeEventListener('wheel', handleWheel);
   }, [isRTL]);
 
-  // Touch swipe support for mobile / tablets
+  // Touch swipe support
   useEffect(() => {
     let touchStartX = 0;
     let touchStartY = 0;
@@ -224,11 +219,11 @@ export const Home: React.FC = () => {
   return (
     <div
       ref={containerRef}
-      className={`fixed inset-0 w-screen h-screen overflow-hidden bg-background text-gray-200 selection:bg-brand-dark selection:text-white ${
+      className={`fixed inset-0 w-screen h-screen overflow-hidden bg-background text-gray-200 selection:bg-white/20 selection:text-white ${
         isRTL ? 'font-arabic' : 'font-sans'
       }`}
     >
-      <CyberCanvasBackground />
+      <TeslaBackground />
 
       <HorizontalHUD
         currentSlideIndex={currentSlideIndex}

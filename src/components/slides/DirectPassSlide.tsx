@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Sparkles, UserCheck, ShieldCheck, CheckCircle, Phone, User, Tag, Trophy, AlertCircle } from 'lucide-react';
 import { Tournament } from '../../types';
 import { formatMAD } from '../../utils/formatters';
 import { store } from '../../services/store';
@@ -38,7 +37,7 @@ export const DirectPassSlide: React.FC<DirectPassSlideProps> = ({ tournaments, o
     soundManager.playClick();
 
     if (!fullName.trim() || !gamerTag.trim() || !phone.trim()) {
-      setErrorMessage(isRTL ? 'يرجى ملء جميع الحقول المطلوبة (الاسم، اللقب، ورقم الهاتف).' : 'Please fill all required fields (Name, Gamer Tag, and Phone Number).');
+      setErrorMessage(isRTL ? 'يرجى ملء جميع الحقول المطلوبة (الاسم الكامل، اسم اللاعب، ورقم الهاتف).' : 'Please fill all required fields (Full Name, Gamer Tag, and Phone Number).');
       return;
     }
 
@@ -73,64 +72,59 @@ export const DirectPassSlide: React.FC<DirectPassSlideProps> = ({ tournaments, o
   };
 
   return (
-    <div className="w-screen h-screen flex-shrink-0 flex items-center justify-center p-4 sm:p-8 lg:p-14 relative overflow-hidden select-none">
-      
-      {/* Glow */}
-      <div className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-brand-orange/15 rounded-full blur-[160px] pointer-events-none" />
-
-      <div className="max-w-5xl w-full mx-auto space-y-4 relative z-10 flex flex-col justify-center h-full max-h-[92vh]">
+    <div className="w-screen h-screen flex-shrink-0 flex items-center justify-center p-6 sm:p-12 lg:p-16 relative overflow-hidden select-none">
+      <div className="max-w-4xl w-full mx-auto space-y-4 relative z-10 flex flex-col justify-center h-full max-h-[88vh]">
         
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto space-y-1">
-          <div className="inline-flex items-center space-x-2 rtl:space-x-reverse px-3 py-1 rounded-full bg-brand-orange/15 border border-brand-orange/30 text-brand-orange text-xs font-mono font-bold uppercase">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>{t('navScene5')}</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black font-display text-white uppercase tracking-tight">
-            {t('passHeading')}
+        <div className="text-center max-w-xl mx-auto space-y-1">
+          <span className="text-[11px] font-mono text-gray-500 uppercase tracking-widest block">
+            {t('navScene5')}
+          </span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black font-display text-white uppercase tracking-tight">
+            {t('passTitle')}
           </h2>
-          <p className="text-xs sm:text-sm text-gray-300">
-            {t('passSubtitle')}
+          <p className="text-xs sm:text-sm text-gray-400">
+            {t('passDesc')}
           </p>
         </div>
 
-        {/* Card Form / Success Ticket Container */}
-        <div className="bg-surface-200/90 border border-border/80 rounded-3xl p-5 sm:p-8 backdrop-blur-xl shadow-elevated max-w-3xl mx-auto w-full relative overflow-hidden">
+        {/* Minimal Tesla Form / Access Badge Container */}
+        <div className="tesla-panel rounded-2xl p-6 sm:p-8 max-w-2xl mx-auto w-full relative">
           
           {isSuccess ? (
-            <div className="py-8 text-center space-y-4 animate-fade-in font-mono">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mx-auto shadow-neon-cyan">
-                <CheckCircle className="w-10 h-10 text-emerald-400" />
+            <div className="py-6 text-center space-y-4 animate-fade-in font-mono">
+              <div className="w-12 h-12 rounded-full bg-white/10 border border-white/20 flex items-center justify-center mx-auto text-white text-lg font-bold">
+                ✓
               </div>
               <div>
-                <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold uppercase tracking-widest">
-                  PASS ACTIVE // البطاقة مفعلة
+                <span className="text-[10px] text-gray-400 uppercase tracking-widest block">
+                  VERIFIED PASS
                 </span>
-                <h3 className="text-2xl sm:text-3xl font-display font-black text-white uppercase mt-2">
-                  {t('registrationSuccess')}
+                <h3 className="text-xl sm:text-2xl font-bold text-white uppercase mt-1">
+                  {t('successTitle')}
                 </h3>
               </div>
 
-              <div className="p-4 rounded-2xl bg-surface-300 border border-white/10 max-w-md mx-auto text-left rtl:text-right space-y-2 text-xs">
+              <div className="p-4 rounded-xl bg-surface-300 border border-white/5 max-w-md mx-auto text-left rtl:text-right space-y-1.5 text-xs">
                 <div className="text-gray-400 flex justify-between">
-                  <span>Player Tag:</span> <strong className="text-white font-bold">@{gamerTag}</strong>
+                  <span>Player:</span> <strong className="text-white">@{gamerTag}</strong>
                 </div>
                 <div className="text-gray-400 flex justify-between">
-                  <span>Full Name:</span> <strong className="text-gray-200">{fullName}</strong>
+                  <span>Name:</span> <strong className="text-gray-200">{fullName}</strong>
                 </div>
                 <div className="text-gray-400 flex justify-between">
-                  <span>Tournament:</span> <strong className="text-brand-orange font-bold">{currentTournament?.name}</strong>
+                  <span>Tournament:</span> <strong className="text-brand-orange">{currentTournament?.name}</strong>
                 </div>
                 <div className="text-gray-400 flex justify-between">
-                  <span>Entry Fee:</span> <strong className="text-emerald-400 font-bold">{formatMAD(currentTournament?.entry_fee_mad)}</strong>
+                  <span>Entry Fee:</span> <strong className="text-emerald-400">{formatMAD(currentTournament?.entry_fee_mad)}</strong>
                 </div>
                 <div className="text-gray-400 flex justify-between">
-                  <span>WhatsApp:</span> <strong className="text-cyan-400 font-bold">{phone}</strong>
+                  <span>WhatsApp:</span> <strong className="text-white">{phone}</strong>
                 </div>
               </div>
 
               <p className="text-xs text-gray-400 max-w-md mx-auto">
-                {t('successDetail')}
+                {t('successDesc')}
               </p>
 
               <button
@@ -142,26 +136,24 @@ export const DirectPassSlide: React.FC<DirectPassSlideProps> = ({ tournaments, o
                   setPhone('');
                   setTeamName('');
                 }}
-                className="px-6 py-2.5 rounded-xl bg-surface-100 hover:bg-surface-50 text-white text-xs font-bold font-mono transition-colors"
+                className="px-6 py-2 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-mono transition-colors"
               >
-                {isRTL ? 'تسجيل لاعب آخر' : 'Register Another Player'}
+                {isRTL ? 'تسجيل لاعب إضافي' : 'Register Another Player'}
               </button>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4 font-sans">
               
               {errorMessage && (
-                <div className="p-3 rounded-2xl bg-rose-950/60 border border-rose-800/80 text-rose-300 text-xs flex items-center space-x-2.5 rtl:space-x-reverse animate-fade-in">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                  <span>{errorMessage}</span>
+                <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                  {errorMessage}
                 </div>
               )}
 
               {/* Tournament Selector */}
               <div className="space-y-1">
-                <label className="block text-xs font-mono font-bold text-gray-300 flex items-center space-x-1.5 rtl:space-x-reverse">
-                  <Trophy className="w-3.5 h-3.5 text-brand-orange" />
-                  <span>{t('fieldTournament')}</span>
+                <label className="block text-xs font-mono font-medium text-gray-400 uppercase">
+                  {t('tournamentSelect')}
                 </label>
                 <select
                   value={selectedTournamentId}
@@ -169,11 +161,11 @@ export const DirectPassSlide: React.FC<DirectPassSlideProps> = ({ tournaments, o
                     soundManager.playHover();
                     setSelectedTournamentId(e.target.value);
                   }}
-                  className="w-full bg-surface-300 border border-border/80 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none transition-colors"
+                  className="w-full bg-surface-300 border border-white/10 focus:border-white/30 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-white focus:outline-none transition-colors"
                 >
                   {tournaments.map((trn) => (
                     <option key={trn.id} value={trn.id}>
-                      {trn.name} ({trn.game?.name || 'Esports'} - {formatMAD(trn.prize_pool_mad)})
+                      {trn.name} ({trn.game?.name || 'Esports'} — {formatMAD(trn.prize_pool_mad)})
                     </option>
                   ))}
                 </select>
@@ -182,39 +174,36 @@ export const DirectPassSlide: React.FC<DirectPassSlideProps> = ({ tournaments, o
               {/* Inputs Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-mono font-bold text-gray-300 flex items-center space-x-1 rtl:space-x-reverse">
-                    <User className="w-3 h-3 text-brand-orange" />
-                    <span>{t('fieldName')} *</span>
+                  <label className="block text-[11px] font-mono text-gray-400 uppercase">
+                    {t('fullName')} *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder={isRTL ? 'مثال: كريم المرابط' : 'e.g. Karim Morabit'}
+                    placeholder={isRTL ? 'مثال: يونس العلوي' : 'e.g. Younes Alami'}
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-surface-300 border border-border/80 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"
+                    className="w-full bg-surface-300 border border-white/10 focus:border-white/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-mono font-bold text-gray-300 flex items-center space-x-1 rtl:space-x-reverse">
-                    <Tag className="w-3 h-3 text-brand-orange" />
-                    <span>{t('fieldGamerTag')} *</span>
+                  <label className="block text-[11px] font-mono text-gray-400 uppercase">
+                    {t('gamerTag')} *
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder={isRTL ? 'مثال: ApexGhost' : 'e.g. ApexGhost'}
+                    placeholder={isRTL ? 'مثال: ghost_99' : 'e.g. ghost_99'}
                     value={gamerTag}
                     onChange={(e) => setGamerTag(e.target.value)}
-                    className="w-full bg-surface-300 border border-border/80 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"
+                    className="w-full bg-surface-300 border border-white/10 focus:border-white/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-mono font-bold text-gray-300 flex items-center space-x-1 rtl:space-x-reverse">
-                    <Phone className="w-3 h-3 text-brand-orange" />
-                    <span>{t('fieldPhone')} *</span>
+                  <label className="block text-[11px] font-mono text-gray-400 uppercase">
+                    {t('phoneNumber')} *
                   </label>
                   <input
                     type="tel"
@@ -222,38 +211,35 @@ export const DirectPassSlide: React.FC<DirectPassSlideProps> = ({ tournaments, o
                     placeholder="+212 600-000000"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-surface-300 border border-border/80 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"
+                    className="w-full bg-surface-300 border border-white/10 focus:border-white/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[11px] font-mono font-bold text-gray-300">
-                    {t('fieldTeam')}
+                  <label className="block text-[11px] font-mono text-gray-400 uppercase">
+                    {t('teamName')}
                   </label>
                   <input
                     type="text"
-                    placeholder={isRTL ? 'مثال: Casablanca Elite' : 'e.g. Casablanca Elite'}
+                    placeholder={isRTL ? 'مثال: Atlas Elite' : 'e.g. Atlas Elite'}
                     value={teamName}
                     onChange={(e) => setTeamName(e.target.value)}
-                    className="w-full bg-surface-300 border border-border/80 focus:border-brand-orange rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none transition-colors"
+                    className="w-full bg-surface-300 border border-white/10 focus:border-white/30 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-gray-600 focus:outline-none transition-colors"
                   />
                 </div>
               </div>
 
-              {/* Note */}
-              <div className="p-3 rounded-xl bg-surface-100 border border-border/80 flex items-start space-x-2.5 rtl:space-x-reverse text-[11px] text-gray-400">
-                <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                <span>{t('passNotice')}</span>
+              <div className="text-[11px] text-gray-500 font-mono pt-1">
+                {t('passNotice')}
               </div>
 
               {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-brand-dark via-brand-orange to-amber-500 hover:from-brand-orange hover:to-yellow-400 text-white font-mono font-black text-xs sm:text-sm uppercase tracking-wider shadow-neon-orange transition-all flex items-center justify-center space-x-2 rtl:space-x-reverse cursor-pointer"
+                className="w-full py-3.5 rounded-full bg-white hover:bg-gray-100 text-black font-mono font-semibold text-xs sm:text-sm uppercase tracking-wider transition-all cursor-pointer"
               >
-                <UserCheck className="w-4 h-4" />
-                <span>{isSubmitting ? (isRTL ? 'جاري الإصدار...' : 'ISSUING ARENA PASS...') : t('btnSubmitPass')}</span>
+                {isSubmitting ? (isRTL ? 'جاري المعالجة...' : 'PROCESSING...') : t('submitPass')}
               </button>
             </form>
           )}
