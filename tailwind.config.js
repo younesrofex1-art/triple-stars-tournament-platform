@@ -35,12 +35,17 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Space Grotesk', 'Inter', 'sans-serif'],
+        display: ['Space Grotesk', 'Orbitron', 'Inter', 'sans-serif'],
+        arabic: ['Cairo', 'Tajawal', 'system-ui', 'sans-serif'],
+        orbitron: ['Orbitron', 'sans-serif'],
       },
       boxShadow: {
         'card': '0 4px 20px -2px rgba(0, 0, 0, 0.65)',
         'elevated': '0 10px 30px -5px rgba(0, 0, 0, 0.8)',
         'orange-sm': '0 2px 10px rgba(234, 88, 12, 0.25)',
+        'neon-orange': '0 0 25px rgba(255, 107, 0, 0.35)',
+        'neon-cyan': '0 0 25px rgba(6, 182, 212, 0.35)',
+        'neon-gold': '0 0 25px rgba(245, 158, 11, 0.35)',
       },
     },
   },
